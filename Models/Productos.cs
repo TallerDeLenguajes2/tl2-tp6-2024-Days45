@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace EspacioTp5;
 public class Productos
 {
-    
+    public Productos(){}
     public Productos(int idProducto, string descripcion, int precio)
     {
         IdProducto = idProducto;

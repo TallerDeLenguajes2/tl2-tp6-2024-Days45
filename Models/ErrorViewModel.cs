@@ -1,8 +1,11 @@
-namespace tl2_tp6_2024_Days45.Models;
+using System;
 
-public class ErrorViewModel
+namespace EspacioTp5
 {
-    public string? RequestId { get; set; }
+    public class ErrorViewModel
+    {
+        public string RequestId { get; set; }
 
-    public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    }
 }

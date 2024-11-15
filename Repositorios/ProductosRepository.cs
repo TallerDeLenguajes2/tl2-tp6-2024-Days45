@@ -7,24 +7,36 @@ namespace rapositoriosTP5
 {
     public class ProductoRepository : IProductoRepository
     {
-        private string cadenaConexion ="Data Source=DB/tienda.db;Cache=Shared";
+        private string cadenaConexion = "Data Source=DB/tienda.db;Cache=Shared";
 
         // Crear un nuevo Producto (recibe un objeto Producto)
+        /*CREATE TABLE Productos ( como esta formada la tabla productos en la base de datos
+    idProducto  INTEGER PRIMARY KEY AUTOINCREMENT,
+    Descripcion TEXT    NOT NULL,
+    Precio      INTEGER NOT NULL);*/
         public void CrearProducto(Productos producto)
         {
-            var query =
-                "INSERT INTO productos (idProducto, descripcion, precio) VALUES (@idProducto, @descripcion, @precio)";
-            using (var connection = new SqliteConnection(cadenaConexion))
+            try
             {
-                connection.Open();
-                using (var command = new SqliteCommand(query, connection))
+                var query =
+                    "INSERT INTO productos (descripcion, precio) VALUES (@descripcion, @precio)";
+
+                using (var connection = new SqliteConnection(cadenaConexion))
                 {
-                    command.Parameters.AddWithValue("@idProducto", producto.IdProducto);
-                    command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
-                    command.Parameters.AddWithValue("@precio", producto.Precio);
-                    command.ExecuteNonQuery();
+                    connection.Open();
+                    using (var command = new SqliteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
+                        command.Parameters.AddWithValue("@precio", producto.Precio);
+                        command.ExecuteNonQuery();
+                    }
+                    connection.Close();
                 }
-                connection.Close();
+            }
+            catch (Exception ex)
+            {
+                // Aquí puedes loguear el error o manejarlo según tus necesidades.
+                Console.WriteLine($"Error al crear producto: {ex.Message}");
             }
         }
 
