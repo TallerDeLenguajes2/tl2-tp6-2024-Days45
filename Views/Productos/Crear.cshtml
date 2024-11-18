@@ -1,28 +1,41 @@
-@model EspacioTp5.Productos
-
 @{
     ViewData["Title"] = "Crear Producto";
 }
 
-<h1>@ViewData["Title"]</h1>
+@model EspacioTp5.Productos
 
-<h2>Agregar un nuevo producto</h2>
+<section class="container py-5">
+    <h2 class="border-bottom my-4 text-center">Crear Producto</h2>
 
-<form asp-action="Crear" method="post">
-    <div class="form-group">
-        <label for="Descripcion">Descripción</label>
-        <input type="text" class="form-control" id="Descripcion" name="Descripcion" value="@Model?.Descripcion" required />
+    <!-- Formulario -->
+    <form asp-controller="Productos" asp-action="Crear" method="post" class="w-50 mx-auto bg-light p-4 rounded shadow-sm">
+        <!-- Descripción -->
+        <div class="form-group mb-3">
+            <label for="Descripcion" class="form-label">Descripción</label>
+            <div class="input-group">
+                <span class="input-group-text" id="descripcion-addon">#</span>
+                <input asp-for="Descripcion" class="form-control" aria-describedby="descripcion-addon" required />
+            </div>
+        </div>
+
+        <!-- Precio -->
+        <div class="form-group mb-3">
+            <label for="Precio" class="form-label">Precio</label>
+            <div class="input-group">
+                <span class="input-group-text" id="precio-addon">$</span>
+                <input asp-for="Precio" class="form-control" aria-describedby="precio-addon" required />
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-between mt-4">
+            <input type="submit" value="Crear Producto" class="btn btn-primary" />
+            <input type="reset" value="Borrar formulario" class="btn btn-outline-secondary" />
+        </div>
+    </form>
+
+    <!-- Enlace para volver -->
+    <div class="text-center mt-4">
+        <a href="@Url.Action("Index", "Productos")" class="btn btn-link">Volver a la lista de productos</a>
     </div>
-
-    <div class="form-group">
-        <label for="Precio">Precio</label>
-        <input type="number" class="form-control" id="Precio" name="Precio" value="@Model?.Precio" required />
-    </div>
-
-    <div class="form-group">
-        <button type="submit" class="btn btn-primary">Crear Producto</button>
-    </div>
-</form>
-
-<br />
-<a href="@Url.Action("Index", "Productos")">Volver a la lista de productos</a>
+</section>
