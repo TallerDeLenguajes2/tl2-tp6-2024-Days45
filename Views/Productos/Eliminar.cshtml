@@ -1,0 +1,30 @@
+@model EspacioTp5.Productos
+
+@{
+    ViewData["Title"] = "Eliminar Producto";
+}
+
+<section class="container py-5">
+    <h2 class="border-bottom my-4 text-center">Eliminar Producto</h2>
+
+    <p class="text-center text-danger">
+        ¿Estás seguro de que deseas eliminar el siguiente producto?
+    </p>
+
+    <!-- Datos del producto -->
+    <div class="card text-center mx-auto w-50">
+        <div class="card-body">
+            <h5 class="card-title">Producto: @Model.Descripcion</h5>
+            <p class="card-text">Precio: $@Model.Precio</p>
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="d-flex justify-content-center mt-4">
+        <form asp-controller="Productos" asp-action="EliminarProducto" method="post" class="me-3">
+            <input type="hidden" name="id" value="@Model.IdProducto" /> <!-- Aquí el ID del producto -->
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+        </form>
+        <a href="@Url.Action("Index", "Productos")" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</section>

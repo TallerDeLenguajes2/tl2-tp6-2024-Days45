@@ -46,28 +46,8 @@ namespace tl2_tp6_2024_Days45.Controllers
             return RedirectToAction("Index");
         }
 
-        [HttpPost]
-        public IActionResult Modificar(int id, Productos producto)
-        {
-            try
-            {
-                if (ModelState.IsValid)
-                {
-                    _repositorioProductos.ModificarProducto(id, producto);
-                    _logger.LogInformation("Producto con ID {ProductoId} modificado", id);
-                    return RedirectToAction("Index");
-                }
-                return View(producto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al modificar el producto con ID {ProductoId}", id);
-                return View("Error");
-            }
-        }
-
         [HttpGet]
-        public IActionResult Eliminar(int id)
+        public IActionResult Modificar(int id)
         {
             try
             {
@@ -75,36 +55,50 @@ namespace tl2_tp6_2024_Days45.Controllers
                 if (producto == null)
                 {
                     _logger.LogWarning("Producto con ID {ProductoId} no encontrado", id);
-                    return NotFound();
+                    return RedirectToAction("Index");
                 }
-                return View(producto);
+                return View(producto); // Muestra el formulario con los datos del producto.
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error al obtener el producto con ID {ProductoId} para eliminar",
-                    id
-                );
+                _logger.LogError(ex, "Error al obtener el producto con ID {ProductoId} para su modificación", id);
                 return View("Error");
             }
         }
 
         [HttpPost]
-        [ActionName("Eliminar")]
-        public IActionResult EliminarProducto(int id)
+        public IActionResult Modificar(int idProducto, string descripcion, int precio)
         {
             try
             {
-                _repositorioProductos.EliminarProducto(id);
-                _logger.LogInformation("Producto con ID {ProductoId} eliminado", id);
-                return RedirectToAction("Index");
+                if (string.IsNullOrEmpty(descripcion) || precio < 0)
+                {
+                    ModelState.AddModelError("", "Descripción y precio son requeridos.");
+                    return View(); 
+                }
+                var producto = new Productos(idProducto, descripcion, precio);
+                _repositorioProductos.ModificarProducto(idProducto, producto);
+                _logger.LogInformation("Producto con ID {ProductoId} modificado", idProducto);
+                return RedirectToAction("Index"); 
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al eliminar el producto con ID {ProductoId}", id);
-                return View("Error");
+                _logger.LogError(ex, "Error al modificar el producto con ID {ProductoId}", idProducto);
+                return View("Error"); 
             }
+        }
+
+        [HttpGet]
+        public IActionResult Eliminar(int id)
+        {
+            return View(_repositorioProductos.ObtenerProducto(id));
+        }
+
+        [HttpPost]
+        public IActionResult EliminarProducto(int id)
+        {
+            _repositorioProductos.EliminarProducto(id);
+            return RedirectToAction("Index");
         }
     }
 }

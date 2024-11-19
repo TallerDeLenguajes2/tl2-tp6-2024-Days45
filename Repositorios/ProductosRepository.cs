@@ -9,14 +9,13 @@ namespace rapositoriosTP5
     {
         private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
 
-        // Crear un nuevo Producto (recibe un objeto Producto)
         /*CREATE TABLE Productos ( como esta formada la tabla productos en la base de datos
     idProducto  INTEGER PRIMARY KEY AUTOINCREMENT,
     Descripcion TEXT    NOT NULL,
     Precio      INTEGER NOT NULL);*/
         public void CrearProducto(Productos producto)
         {
-            using (var connection = new SqliteConnection("Data Source=DB/Tienda.db"))
+            using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
 
@@ -27,16 +26,14 @@ namespace rapositoriosTP5
                     command.Parameters.AddWithValue(
                         "@Descripcion",
                         producto.Descripcion ?? string.Empty
-                    ); // Asegura que Descripcion no sea null
+                    );
                     command.Parameters.AddWithValue("@Precio", producto.Precio);
-
-                    // Ejecuto la inserción
                     command.ExecuteNonQuery();
                 }
             }
         }
 
-        // Modificar un Producto existente (recibe un Id y un objeto Producto)
+
         public void ModificarProducto(int id, Productos producto)
         {
             var query =
@@ -55,7 +52,6 @@ namespace rapositoriosTP5
             }
         }
 
-        // Listar todos los Productos registrados (devuelve un List de Producto)
         public List<Productos> ListarProductos()
         {
             var productos = new List<Productos>();
@@ -83,7 +79,6 @@ namespace rapositoriosTP5
             return productos;
         }
 
-        // Obtener detalles de un Producto por su ID (recibe un Id y devuelve un Producto)
         public Productos ObtenerProducto(int id)
         {
             Productos producto = null;
@@ -111,20 +106,40 @@ namespace rapositoriosTP5
             return producto;
         }
 
-        // Eliminar un Producto por ID (recibe un Id)
         public void EliminarProducto(int id)
         {
-            var query = "DELETE FROM productos WHERE idProducto = @idProducto";
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                using (var command = new SqliteCommand(query, connection))
+                using (var transaction = connection.BeginTransaction())
                 {
-                    command.Parameters.AddWithValue("@idProducto", id);
-                    command.ExecuteNonQuery();
+                    try
+                    {
+                        var deleteDetalleQuery = @"DELETE FROM PresupuestosDetalle WHERE idProducto=$id";
+                        using (var sqlCmd = new SqliteCommand(deleteDetalleQuery, connection, transaction))
+                        {
+                            sqlCmd.Parameters.AddWithValue("$id", id);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+
+                        var sqlQuery = @"DELETE FROM Productos WHERE idProducto=$id";
+                        using (var sqlCmd = new SqliteCommand(sqlQuery, connection, transaction))
+                        {
+                            sqlCmd.Parameters.AddWithValue("$id", id);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit(); 
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw new Exception("Error al eliminar producto: " + ex.Message);
+                    }
                 }
-                connection.Close();
             }
+
         }
+
     }
 }

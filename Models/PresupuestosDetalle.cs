@@ -9,7 +9,10 @@ namespace EspacioTp5;
 
 public class PresupuestosDetalle
 {
-    
+    public PresupuestosDetalle(){
+        Cantidad=0;
+        Producto=new Productos();
+    }
     public PresupuestosDetalle(Productos producto, int cantidad)
     {
         Producto = producto;
