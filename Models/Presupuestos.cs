@@ -14,23 +14,26 @@ namespace EspacioTp5;
 
 public class Presupuestos
 {
-    [JsonConstructor]
+    public Presupuestos()
+    {
+        Detalle = new List<PresupuestosDetalle>();
+    }
     public Presupuestos(int idPresupuesto, string nombreDestinatario, DateTime fechaCreacion, List<PresupuestosDetalle> detalle = null)
     {
         IdPresupuesto = idPresupuesto;
         NombreDestinatario = nombreDestinatario;
-        FechaCreacion = fechaCreacion;  // Aquí se pasa la fecha al crear el presupuesto
+        FechaCreacion = fechaCreacion;
         Detalle = detalle ?? new List<PresupuestosDetalle>();
     }
-    [JsonPropertyName("idPresupuesto")]
+    public Presupuestos(string nombreDestinatario, DateTime fechaCreacion)
+    {
+        NombreDestinatario = nombreDestinatario;
+        FechaCreacion = fechaCreacion;
+    }
     public int IdPresupuesto { get; private set; }
-    [JsonPropertyName("nombreDestinatario")]
     public string NombreDestinatario { get; private set; }
-    [JsonPropertyName("detalle")]
     public List<PresupuestosDetalle> Detalle { get; private set; }
-    [JsonPropertyName("fechaCreacion")]
-    public DateTime FechaCreacion { get; private set; } // Nueva propiedad
-
+    public DateTime FechaCreacion { get; private set; }
     public double MontoPresupuesto()
     {
         double monto = 0.0;

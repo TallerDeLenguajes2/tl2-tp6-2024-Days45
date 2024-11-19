@@ -14,47 +14,14 @@ namespace rapositoriosTP5
             using (SqliteConnection connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                using (var transaction = connection.BeginTransaction())
-                {
-                    try
-                    {
-                        // Insertar el presupuesto principal con fecha de creación
-                        string queryPresupuesto = "INSERT INTO Presupuestos (idPresupuesto, NombreDestinatario, FechaCreacion) VALUES (@idPresupuesto, @nombreDestinatario, @fechaCreacion)";
-                        using (SqliteCommand command = new SqliteCommand(queryPresupuesto, connection, transaction))
-                        {
-                            command.Parameters.AddWithValue("@idPresupuesto", presupuesto.IdPresupuesto);
-                            command.Parameters.AddWithValue("@nombreDestinatario", presupuesto.NombreDestinatario);
-                            command.Parameters.AddWithValue("@fechaCreacion", presupuesto.FechaCreacion); // Fecha de creación del presupuesto
-                            command.ExecuteNonQuery();
-                        }
-
-                        // Insertar los detalles del presupuesto
-                        string queryDetalle = "INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) VALUES (@idPresupuesto, @idProducto, @Cantidad)";
-                        using (SqliteCommand command = new SqliteCommand(queryDetalle, connection, transaction))
-                        {
-                            foreach (var detalle in presupuesto.Detalle)
-                            {
-                                command.Parameters.Clear();
-                                command.Parameters.AddWithValue("@idPresupuesto", presupuesto.IdPresupuesto);
-                                command.Parameters.AddWithValue("@idProducto", detalle.Producto.IdProducto); // ID del producto en el detalle
-                                command.Parameters.AddWithValue("@Cantidad", detalle.Cantidad); // Cantidad del producto
-                                command.ExecuteNonQuery();
-                            }
-                        }
-
-                        // Confirmar la transacción
-                        transaction.Commit();
-                    }
-                    catch (Exception ex)
-                    {
-                        // En caso de error, hacer rollback
-                        transaction.Rollback();
-                        throw new Exception($"Error al crear presupuesto: {ex.Message}");
-                    }
-                }
+                string queryString = $"INSERT INTO Presupuestos (NombreDestinatario, FechaCreacion) VALUES (@Nombre, @Fecha);";
+                var command = new SqliteCommand(queryString, connection);
+                command.Parameters.AddWithValue("@Nombre", presupuesto.NombreDestinatario);
+                command.Parameters.AddWithValue("@Fecha", presupuesto.FechaCreacion.ToString("yyyy-MM-dd"));
+                command.ExecuteNonQuery();
+                connection.Close();
             }
         }
-
 
 
 
@@ -161,13 +128,29 @@ namespace rapositoriosTP5
                                 }
                             }
 
-                            listaPresupuestos.Add(new Presupuestos(idPresupuesto, nombreDestinatario,fechaCreacion, detalles)); // Pasamos la fecha de creación
+                            listaPresupuestos.Add(new Presupuestos(idPresupuesto, nombreDestinatario, fechaCreacion, detalles)); // Pasamos la fecha de creación
                         }
                     }
                 }
             }
 
             return listaPresupuestos;
+        }
+        public void ModificarPresupuesto(Presupuestos presupuesto)
+        {
+            using (var connection = new SqliteConnection(cadenaConexion))
+            {
+                connection.Open();
+                string querystring = "UPDATE Presupuestos SET NombreDestinatario = @NombreDestinatario, FechaCreacion = @FechaCreacion WHERE idPresupuesto = @idPresupuesto";
+
+                using (var command = new SqliteCommand(querystring, connection))
+                {
+                    command.Parameters.AddWithValue("@NombreDestinatario", presupuesto.NombreDestinatario);
+                    command.Parameters.AddWithValue("@FechaCreacion", presupuesto.FechaCreacion.ToString("yyyy-MM-dd")); // Formato de fecha: yyyy-MM-dd
+                    command.Parameters.AddWithValue("@idPresupuesto", presupuesto.IdPresupuesto);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
     }

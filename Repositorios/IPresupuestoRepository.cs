@@ -10,5 +10,6 @@ namespace rapositoriosTP5
         public Presupuestos ObtenerPresupuesto(int id);
         public void AgregarProductoAPresupuesto(int presupuestoId, Productos producto, int cantidad);
         public void EliminarPresupuesto(int id);
+        public void ModificarPresupuesto(Presupuestos presupuesto);
     }
 }
