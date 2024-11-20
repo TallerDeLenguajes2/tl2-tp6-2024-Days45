@@ -88,9 +88,29 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
-
-        [HttpPost]
+        [HttpGet]
         public IActionResult Eliminar(int id)
+        {
+            try
+            {
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null)
+                {
+                    _logger.LogWarning("Intento de eliminar un presupuesto inexistente con ID {Id}", id);
+                    return RedirectToAction("Index");
+                }
+                return View(presupuesto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar el presupuesto con ID {Id} para eliminar", id);
+                return View("Error");
+            }
+        }
+
+        // Método POST para realizar la eliminación
+        [HttpPost]
+        public IActionResult Eliminar(int id, string confirmacion)
         {
             try
             {
@@ -137,13 +157,17 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
-
         [HttpGet]
-        public IActionResult VerPresupuesto(int id)
+        public IActionResult VerDetalle(int id)
         {
             try
             {
+                // Obtener el presupuesto usando el repositorio
                 var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null)
+                {
+                    return NotFound();
+                }
                 return View(presupuesto);
             }
             catch (Exception ex)

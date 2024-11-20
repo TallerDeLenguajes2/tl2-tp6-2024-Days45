@@ -32,7 +32,7 @@
                         <td>@presupuesto.NombreDestinatario</td>
                         <td>@presupuesto.FechaCreacion.ToShortDateString()</td>
                         <td>
-                            <a asp-controller="Presupuestos" asp-action="VerPresupuesto" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-info btn-sm">
+                            <a asp-controller="Presupuestos" asp-action="VerDetalle" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-info btn-sm">
                                 Ver
                             </a>
                             <a asp-controller="Presupuestos" asp-action="Modificar" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-warning btn-sm">

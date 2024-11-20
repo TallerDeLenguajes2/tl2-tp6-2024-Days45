@@ -1,0 +1,27 @@
+@model EspacioTp5.Presupuestos
+
+@{
+    ViewData["Title"] = "Eliminar Presupuesto";
+}
+
+<section class="container py-4">
+    <h2 class="text-center my-4">Eliminar Presupuesto</h2>
+    <div class="alert alert-warning text-center">
+        <p>¿Estás seguro de que deseas eliminar el presupuesto con la siguiente información?</p>
+    </div>
+
+    <div class="card mx-auto" style="max-width: 500px;">
+        <div class="card-body">
+            <h5 class="card-title">Detalles del Presupuesto</h5>
+            <p><strong>ID:</strong> @Model.IdPresupuesto</p>
+            <p><strong>Destinatario:</strong> @Model.NombreDestinatario</p>
+            <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
+        </div>
+    </div>
+
+    <form asp-action="Eliminar" asp-controller="Presupuestos" method="post" class="text-center mt-4">
+        <input type="hidden" name="id" value="@Model.IdPresupuesto" />
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-secondary">Cancelar</a>
+    </form>
+</section>

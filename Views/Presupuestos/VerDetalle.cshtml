@@ -1,0 +1,55 @@
+@model EspacioTp5.Presupuestos
+
+@{
+    ViewData["Title"] = "Detalle del Presupuesto";
+}
+
+<section class="container py-4">
+    <h2 class="text-center my-4">Detalle del Presupuesto</h2>
+
+    <div class="card mx-auto mb-4" style="max-width: 800px;">
+        <div class="card-body">
+            <h5 class="card-title">Presupuesto ID: @Model.IdPresupuesto</h5>
+            <p><strong>Destinatario:</strong> @Model.NombreDestinatario</p>
+            <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
+            <p><strong>Cantidad de Productos:</strong> @Model.CantidadProductos()</p>
+            <p><strong>Monto Total (sin IVA):</strong> @(Model.MontoPresupuesto().ToString("N2"))</p>
+            <p><strong>Monto Total (con IVA):</strong> @(Model.MontoPresupuestoConIva().ToString("N2"))</p>
+        </div>
+    </div>
+
+    @if (Model.Detalle != null && Model.Detalle.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Detalle)
+                {
+                    <tr>
+                        <td>@item.Producto.Descripcion</td>
+                        <td>@(item.Producto.Precio.ToString("N2"))</td>
+                        <td>@item.Cantidad</td>
+                        <td>@((item.Producto.Precio * item.Cantidad).ToString("N2"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            No hay productos asociados a este presupuesto.
+        </div>
+    }
+
+    <div class="text-center mt-4">
+        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista</a>
+    </div>
+</section>
