@@ -1,0 +1,42 @@
+@model EspacioTp5.Presupuestos
+
+@{
+    ViewData["Title"] = "Agregar Producto al Presupuesto";
+}
+
+<section class="container py-4">
+    <h2 class="text-center my-4">Agregar Producto al Presupuesto</h2>
+
+    <div class="card mx-auto mb-4" style="max-width: 800px;">
+        <div class="card-body">
+            <h5 class="card-title">Presupuesto ID: @Model.IdPresupuesto</h5>
+            <p><strong>Destinatario:</strong> @Model.NombreDestinatario</p>
+            <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
+        </div>
+    </div>
+
+    <form asp-action="AgregarProducto" method="post" class="mx-auto" style="max-width: 600px;">
+        <input type="hidden" name="idPresupuesto" value="@Model.IdPresupuesto" />
+
+        <div class="mb-3">
+            <label for="idProducto" class="form-label">Producto</label>
+            <select id="idProducto" name="idProducto" class="form-select" required>
+                <option value="" disabled selected>Seleccione un producto</option>
+                @foreach (var producto in ViewBag.Productos)
+                {
+                    <option value="@producto.IdProducto">@producto.Descripcion - @producto.Precio.ToString("N2")</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="cantidad" class="form-label">Cantidad</label>
+            <input type="number" id="cantidad" name="cantidad" class="form-control" min="1" required />
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a asp-action="VerDetalle" asp-route-id="@Model.IdPresupuesto" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Agregar Producto</button>
+        </div>
+    </form>
+</section>
