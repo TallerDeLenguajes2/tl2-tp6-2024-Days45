@@ -72,18 +72,58 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpGet]
-        public IActionResult Modificar(int id,int clienteId)
+        public IActionResult Modificar(int id, int clienteId)
         {
             try
             {
+                // Obtener cliente y presupuesto
                 var cliente = _repositorioClientes.ObtenerCliente(clienteId);
-                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id,cliente);
-                return View(presupuesto);
+                if (cliente == null)
+                {
+                    _logger.LogWarning("Cliente con ID {IdCliente} no encontrado", clienteId);
+                    return View(
+                        "Error",
+                        new ErrorViewModel { ErrorMessage = "Cliente no encontrado" }
+                    );
+                }
+
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id, cliente);
+                if (presupuesto == null)
+                {
+                    _logger.LogWarning("Presupuesto con ID {Id} no encontrado", id);
+                    return View(
+                        "Error",
+                        new ErrorViewModel { ErrorMessage = "Presupuesto no encontrado" }
+                    );
+                }
+
+                // Obtener lista de todos los clientes para el dropdown
+                var clientes = _repositorioClientes.ListarClientes();
+
+                // Generar las opciones de cliente como HTML
+                var opcionesClientes = "";
+                foreach (var c in clientes)
+                {
+                    var selected = c.IdCliente == clienteId ? "selected" : "";
+                    opcionesClientes +=
+                        $"<option value='{c.IdCliente}' {selected}>{c.Nombre}</option>";
+                }
+
+                // Pasar datos a la vista
+                ViewBag.OpcionesClientes = opcionesClientes;
+                ViewBag.Presupuesto = presupuesto;
+                return View();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener el presupuesto con ID {Id}", id);
-                return View("Error");
+                return View(
+                    "Error",
+                    new ErrorViewModel
+                    {
+                        ErrorMessage = $"Error al obtener el presupuesto: {ex.Message}"
+                    }
+                );
             }
         }
 
@@ -94,6 +134,13 @@ namespace tl2_tp6_2024_Days45.Controllers
             {
                 // Obtener el cliente actualizado
                 var cliente = _repositorioClientes.ObtenerCliente(clienteId);
+
+                // Verificar si el cliente es nulo
+                if (cliente == null)
+                {
+                    _logger.LogWarning("Cliente con ID {IdCliente} no encontrado", clienteId);
+                    return View("Error");
+                }
 
                 // Crear el objeto Presupuesto actualizado
                 var presupuesto = new Presupuestos(

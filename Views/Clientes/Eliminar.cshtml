@@ -1,0 +1,25 @@
+@model EspacioTp5.Clientes
+
+@{
+    ViewData["Title"] = "Eliminar Cliente";
+}
+
+<h1>Eliminar Cliente</h1>
+
+<div>
+    <h4>¿Estás seguro de que deseas eliminar al siguiente cliente?</h4>
+    <dl class="dl-horizontal">
+        <dt>Nombre</dt>
+        <dd>@Model.Nombre</dd>
+        <dt>Email</dt>
+        <dd>@Model.Email</dd>
+        <dt>Teléfono</dt>
+        <dd>@Model.Telefono</dd>
+    </dl>
+
+    <form asp-action="EliminarCliente" method="post">
+        <input type="hidden" name="idCliente" value="@Model.IdCliente" />
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

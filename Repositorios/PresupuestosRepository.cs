@@ -65,6 +65,11 @@ namespace rapositoriosTP5
         // Obtener presupuesto por ID
         public Presupuestos ObtenerPresupuesto(int id, Clientes cliente)
         {
+            if (cliente == null)
+            {
+                throw new ArgumentNullException(nameof(cliente), "Cliente no encontrado");
+            }
+
             ProductoRepository productoRepository = new ProductoRepository();
             DateTime fechaCreacion = DateTime.MinValue;
             List<PresupuestosDetalle> detalles = new List<PresupuestosDetalle>();
@@ -74,37 +79,44 @@ namespace rapositoriosTP5
                 connection.Open();
                 string query =
                     @"SELECT P.idPresupuesto, P.FechaCreacion, PD.idProducto, PD.Cantidad 
-                         FROM Presupuestos P
-                         LEFT JOIN PresupuestosDetalle PD ON P.idPresupuesto = PD.idPresupuesto
-                         WHERE P.idPresupuesto = @id";
+              FROM Presupuestos P
+              LEFT JOIN PresupuestosDetalle PD ON P.idPresupuesto = PD.idPresupuesto
+              WHERE P.idPresupuesto = @id";
 
                 using (var command = new SqliteCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);
                     using (var reader = command.ExecuteReader())
                     {
+                        // Verificar si hay al menos una fila
                         if (reader.Read())
                         {
-                            fechaCreacion = reader.GetDateTime(1); // Fecha de creación
+                            // Obtener la fecha de creación
+                            fechaCreacion = reader.GetDateTime(1);
 
+                            // Leer detalles del presupuesto
                             do
                             {
-                                var producto = productoRepository.ObtenerProducto(
-                                    reader.GetInt32(2)
-                                );
-                                int cantidad = reader.GetInt32(3);
-                                detalles.Add(new PresupuestosDetalle(producto, cantidad));
+                                if (!reader.IsDBNull(2)) // Verificar si el producto no es nulo
+                                {
+                                    var producto = productoRepository.ObtenerProducto(
+                                        reader.GetInt32(2)
+                                    );
+                                    int cantidad = reader.GetInt32(3);
+                                    detalles.Add(new PresupuestosDetalle(producto, cantidad));
+                                }
                             } while (reader.Read());
+                        }
+                        else
+                        {
+                            // Si no se encuentra el presupuesto, retornar null
+                            return null;
                         }
                     }
                 }
             }
 
-            if (cliente == null)
-            {
-                throw new Exception("Cliente no encontrado");
-            }
-
+            // Retornar el objeto Presupuestos
             return new Presupuestos(id, cliente, detalles, fechaCreacion);
         }
 
@@ -137,7 +149,14 @@ namespace rapositoriosTP5
                                 throw new Exception($"Cliente con ID {idCliente} no encontrado.");
                             }
 
-                            listaPresupuestos.Add(new Presupuestos(idPresupuesto,cliente,new List<PresupuestosDetalle>(),fechaCreacion));
+                            listaPresupuestos.Add(
+                                new Presupuestos(
+                                    idPresupuesto,
+                                    cliente,
+                                    new List<PresupuestosDetalle>(),
+                                    fechaCreacion
+                                )
+                            );
                         }
                     }
                 }

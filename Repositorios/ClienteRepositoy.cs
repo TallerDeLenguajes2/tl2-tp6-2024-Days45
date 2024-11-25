@@ -9,51 +9,50 @@ namespace rapositoriosTP5
     {
         private string cadenaConexion = "Data Source=db/Tienda.db;Cache=Shared";
 
-        // Constructor que recibe la cadena de conexión
-    
-
         // Crear un cliente
         public void CrearCliente(Clientes cliente)
         {
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                var query = "INSERT INTO Clientes (Nombre, Email) VALUES (@Nombre, @Email)";
+                var query =
+                    "INSERT INTO Clientes (Nombre, Email, Telefono) VALUES (@Nombre, @Email, @Telefono)";
                 using (var command = new SqliteCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Nombre", cliente.Nombre);
                     command.Parameters.AddWithValue("@Email", cliente.Email);
+                    command.Parameters.AddWithValue("@Telefono", cliente.Telefono);
                     command.ExecuteNonQuery();
                 }
             }
         }
 
-        public Clientes ObtenerCliente(int id)
+        public Clientes ObtenerCliente(int idCliente)
         {
+            Clientes cliente = null;
+            var query = "SELECT * FROM Clientes WHERE IdCliente = @idCliente";
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                var query =
-                    "SELECT IdCliente, Nombre, Email, Telefono FROM Clientes WHERE IdCliente = @Id";
                 using (var command = new SqliteCommand(query, connection))
                 {
-                    command.Parameters.AddWithValue("@Id", id);
+                    command.Parameters.AddWithValue("@idCliente", idCliente);
                     using (var reader = command.ExecuteReader())
                     {
                         if (reader.Read())
                         {
-                            return new Clientes(
-                                reader.GetInt32(reader.GetOrdinal("IdCliente")), // int
-                                reader.GetString(reader.GetOrdinal("Nombre")), // string
-                                reader.GetString(reader.GetOrdinal("Email")), // string
-                                reader.GetString(reader.GetOrdinal("Telefono")) // string
+                            cliente = new Clientes(
+                                Convert.ToInt32(reader["IdCliente"]),
+                                reader["Nombre"].ToString(),
+                                reader["Email"].ToString(),
+                                reader["Telefono"].ToString()
                             );
                         }
                     }
                 }
+                connection.Close();
             }
-
-            throw new Exception("Cliente no encontrado");
+            return cliente;
         }
 
         // Modificar un cliente por ID
@@ -63,11 +62,15 @@ namespace rapositoriosTP5
             {
                 connection.Open();
                 var query =
-                    "UPDATE Clientes SET Nombre = @Nombre, Email = @Email WHERE IdCliente = @Id";
+                    "UPDATE Clientes SET Nombre = @Nombre, Email = @Email, Telefono = @Telefono WHERE IdCliente = @Id";
                 using (var command = new SqliteCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Nombre", cliente.Nombre);
                     command.Parameters.AddWithValue("@Email", cliente.Email);
+                    command.Parameters.AddWithValue(
+                        "@Telefono",
+                        cliente.Telefono ?? (object)DBNull.Value
+                    ); // Manejo de null
                     command.Parameters.AddWithValue("@Id", id);
                     command.ExecuteNonQuery();
                 }
