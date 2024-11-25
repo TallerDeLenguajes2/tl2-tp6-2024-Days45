@@ -1,10 +1,4 @@
-/*
-PresupuestosDetalle
-○ Productos producto
-○ int cantidad
-*/
 using System;
-using System.Text.Json.Serialization;
 namespace EspacioTp5;
 
 public class PresupuestosDetalle
@@ -18,8 +12,6 @@ public class PresupuestosDetalle
         Producto = producto;
         Cantidad = cantidad;
     }
-    [JsonPropertyName("producto")]
     public Productos Producto {get;private set;}
-    [JsonPropertyName("cantidad")]
     public int Cantidad{get;private set;}
 }

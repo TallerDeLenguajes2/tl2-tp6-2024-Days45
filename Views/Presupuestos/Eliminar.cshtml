@@ -14,7 +14,9 @@
         <div class="card-body">
             <h5 class="card-title">Detalles del Presupuesto</h5>
             <p><strong>ID:</strong> @Model.IdPresupuesto</p>
-            <p><strong>Destinatario:</strong> @Model.NombreDestinatario</p>
+            <p><strong>Destinatario:</strong> @Model.Cliente.Nombre</p>  <!-- Actualizado para mostrar el nombre del cliente -->
+            <p><strong>Email:</strong> @Model.Cliente.Email</p>  <!-- Muestra el email del cliente -->
+            <p><strong>Teléfono:</strong> @Model.Cliente.Telefono</p>  <!-- Muestra el teléfono del cliente -->
             <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
         </div>
     </div>

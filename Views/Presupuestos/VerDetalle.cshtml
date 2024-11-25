@@ -10,7 +10,8 @@
     <div class="card mx-auto mb-4" style="max-width: 800px;">
         <div class="card-body">
             <h5 class="card-title">Presupuesto ID: @Model.IdPresupuesto</h5>
-            <p><strong>Destinatario:</strong> @Model.NombreDestinatario</p>
+            <p><strong>Cliente:</strong> @Model.Cliente.Nombre</p>  <!-- Cliente Nombre -->
+            <p><strong>Email del Cliente:</strong> @Model.Cliente.Email</p>  <!-- Email del Cliente -->
             <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
             <p><strong>Cantidad de Productos:</strong> @Model.CantidadProductos()</p>
             <p><strong>Monto Total (sin IVA):</strong> @(Model.MontoPresupuesto().ToString("N2"))</p>

@@ -1,7 +1,10 @@
+using tl2_tp6_2024_Days45.Controllers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<PresupuestosController>(provider =>
+    new PresupuestosController(provider.GetRequiredService<ILogger<PresupuestosController>>()));
 
 var app = builder.Build();
 
