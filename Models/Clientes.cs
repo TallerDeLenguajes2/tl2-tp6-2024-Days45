@@ -25,4 +25,13 @@ public class Clientes
     public string Nombre { get; private set; }
     public string Email { get; private set; }
     public string Telefono { get; private set; }
+
+    public static void MostrarClientes(List<Clientes> clientes)
+    {
+        Console.WriteLine("Lista de Clientes:");
+        foreach (var cliente in clientes)
+        {
+            Console.WriteLine($"ID: {cliente.IdCliente}, Nombre: {cliente.Nombre}");
+        }
+    }
 }

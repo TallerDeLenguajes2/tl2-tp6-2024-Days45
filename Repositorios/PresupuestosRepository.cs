@@ -35,6 +35,8 @@ namespace rapositoriosTP5
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
+
+                // Insertar el producto en el detalle del presupuesto
                 string query =
                     "INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) VALUES (@idPresupuesto, @idProducto, @Cantidad)";
                 using (var command = new SqliteCommand(query, connection))
@@ -62,61 +64,62 @@ namespace rapositoriosTP5
             }
         }
 
-        // Obtener presupuesto por ID
-        public Presupuestos ObtenerPresupuesto(int id, Clientes cliente)
+        public Presupuestos ObtenerPresupuesto(int id)
         {
-            if (cliente == null)
-            {
-                throw new ArgumentNullException(nameof(cliente), "Cliente no encontrado");
-            }
-
-            ProductoRepository productoRepository = new ProductoRepository();
-            DateTime fechaCreacion = DateTime.MinValue;
+            DateTime fechaCreacion = DateTime.MinValue; // Fecha por defecto
+            Clientes cliente = null;
             List<PresupuestosDetalle> detalles = new List<PresupuestosDetalle>();
 
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
                 string query =
-                    @"SELECT P.idPresupuesto, P.FechaCreacion, PD.idProducto, PD.Cantidad 
-              FROM Presupuestos P
-              LEFT JOIN PresupuestosDetalle PD ON P.idPresupuesto = PD.idPresupuesto
-              WHERE P.idPresupuesto = @id";
+                    @"SELECT P.idPresupuesto, C.idCliente, C.Nombre, C.Email, C.Telefono, P.FechaCreacion, 
+                                PD.idProducto, PD.Cantidad, Pr.Descripcion, Pr.Precio
+                         FROM Presupuestos P
+                         INNER JOIN Clientes C ON P.idCliente = C.idCliente
+                         INNER JOIN PresupuestosDetalle PD ON P.idPresupuesto = PD.idPresupuesto
+                         INNER JOIN Productos Pr ON PD.idProducto = Pr.idProducto
+                         WHERE P.idPresupuesto = @id";
 
                 using (var command = new SqliteCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);
                     using (var reader = command.ExecuteReader())
                     {
-                        // Verificar si hay al menos una fila
-                        if (reader.Read())
+                        while (reader.Read())
                         {
-                            // Obtener la fecha de creación
-                            fechaCreacion = reader.GetDateTime(1);
-
-                            // Leer detalles del presupuesto
-                            do
+                            if (cliente == null) // Solo asignar el cliente una vez
                             {
-                                if (!reader.IsDBNull(2)) // Verificar si el producto no es nulo
-                                {
-                                    var producto = productoRepository.ObtenerProducto(
-                                        reader.GetInt32(2)
-                                    );
-                                    int cantidad = reader.GetInt32(3);
-                                    detalles.Add(new PresupuestosDetalle(producto, cantidad));
-                                }
-                            } while (reader.Read());
-                        }
-                        else
-                        {
-                            // Si no se encuentra el presupuesto, retornar null
-                            return null;
+                                cliente = new Clientes(
+                                    reader.GetInt32(1), // idCliente
+                                    reader.GetString(2), // Nombre del cliente
+                                    reader.GetString(3), // Email del cliente
+                                    reader.GetString(4) // Teléfono del cliente
+                                );
+                                fechaCreacion = reader.GetDateTime(5); // Leer la fecha de creación
+                            }
+
+                            // Crear el detalle del presupuesto
+                            var producto = new Productos(
+                                reader.GetInt32(6), // idProducto
+                                reader.GetString(8), // Descripción del producto
+                                reader.GetInt32(9) // Precio del producto
+                            );
+                            int cantidad = reader.GetInt32(7); // Obtener la cantidad
+                            detalles.Add(new PresupuestosDetalle(producto, cantidad)); // Crear el detalle
                         }
                     }
                 }
             }
 
-            // Retornar el objeto Presupuestos
+            if (cliente == null)
+            {
+                // Si no se encontró el cliente, devolver null o lanzar una excepción
+                throw new Exception("Cliente no encontrado para el presupuesto");
+            }
+
+            // Crear y devolver el presupuesto con el cliente y los detalles
             return new Presupuestos(id, cliente, detalles, fechaCreacion);
         }
 

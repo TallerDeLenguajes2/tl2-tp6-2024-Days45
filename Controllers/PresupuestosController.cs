@@ -12,12 +12,14 @@ namespace tl2_tp6_2024_Days45.Controllers
         private readonly ILogger<PresupuestosController> _logger;
         private readonly PresupuestoRepository _repositorioPresupuestos;
         private readonly ClienteRepository _repositorioClientes;
+        private readonly ProductoRepository _repositorioProductos;
 
         public PresupuestosController(ILogger<PresupuestosController> logger)
         {
             _logger = logger;
             _repositorioPresupuestos = new PresupuestoRepository();
             _repositorioClientes = new ClienteRepository();
+            _repositorioProductos = new ProductoRepository();
         }
 
         [HttpGet]
@@ -28,26 +30,21 @@ namespace tl2_tp6_2024_Days45.Controllers
             return View(presupuestos);
         }
 
-        // Método GET para mostrar el formulario de creación de presupuesto
         [HttpGet]
         public IActionResult Crear()
         {
-            // Obtener la lista de clientes para mostrar en el formulario
             var clientes = _repositorioClientes.ListarClientes();
-            ViewBag.Clientes = clientes; // Pasar la lista de clientes a la vista
+            ViewBag.Clientes = clientes;
             return View();
         }
 
-        // Método POST para crear el presupuesto
         [HttpPost]
         public IActionResult Crear(int clienteId, DateTime fechaCreacion)
         {
             try
             {
-                // Obtener el cliente por ID desde el repositorio de clientes
                 var cliente = _repositorioClientes.ObtenerCliente(clienteId);
 
-                // Crear el presupuesto con el cliente correspondiente
                 var presupuesto = new Presupuestos(
                     0,
                     cliente,
@@ -55,7 +52,6 @@ namespace tl2_tp6_2024_Days45.Controllers
                     fechaCreacion
                 );
 
-                // Llamamos al repositorio para guardar el presupuesto
                 _repositorioPresupuestos.CrearPresupuesto(presupuesto);
 
                 _logger.LogInformation(
@@ -72,22 +68,11 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpGet]
-        public IActionResult Modificar(int id, int clienteId)
+        public IActionResult Modificar(int id)
         {
             try
             {
-                // Obtener cliente y presupuesto
-                var cliente = _repositorioClientes.ObtenerCliente(clienteId);
-                if (cliente == null)
-                {
-                    _logger.LogWarning("Cliente con ID {IdCliente} no encontrado", clienteId);
-                    return View(
-                        "Error",
-                        new ErrorViewModel { ErrorMessage = "Cliente no encontrado" }
-                    );
-                }
-
-                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id, cliente);
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
                 if (presupuesto == null)
                 {
                     _logger.LogWarning("Presupuesto con ID {Id} no encontrado", id);
@@ -97,19 +82,18 @@ namespace tl2_tp6_2024_Days45.Controllers
                     );
                 }
 
-                // Obtener lista de todos los clientes para el dropdown
                 var clientes = _repositorioClientes.ListarClientes();
 
-                // Generar las opciones de cliente como HTML
+                // Generar manualmente el HTML de las opciones
                 var opcionesClientes = "";
-                foreach (var c in clientes)
+                foreach (var cliente in clientes)
                 {
-                    var selected = c.IdCliente == clienteId ? "selected" : "";
+                    var seleccionado =
+                        cliente.IdCliente == presupuesto.Cliente.IdCliente ? "selected" : "";
                     opcionesClientes +=
-                        $"<option value='{c.IdCliente}' {selected}>{c.Nombre}</option>";
+                        $"<option value='{cliente.IdCliente}' {seleccionado}>{cliente.Nombre}</option>";
                 }
 
-                // Pasar datos a la vista
                 ViewBag.OpcionesClientes = opcionesClientes;
                 ViewBag.Presupuesto = presupuesto;
                 return View();
@@ -119,10 +103,7 @@ namespace tl2_tp6_2024_Days45.Controllers
                 _logger.LogError(ex, "Error al obtener el presupuesto con ID {Id}", id);
                 return View(
                     "Error",
-                    new ErrorViewModel
-                    {
-                        ErrorMessage = $"Error al obtener el presupuesto: {ex.Message}"
-                    }
+                    new ErrorViewModel { ErrorMessage = "Error al obtener el presupuesto." }
                 );
             }
         }
@@ -132,17 +113,13 @@ namespace tl2_tp6_2024_Days45.Controllers
         {
             try
             {
-                // Obtener el cliente actualizado
                 var cliente = _repositorioClientes.ObtenerCliente(clienteId);
-
-                // Verificar si el cliente es nulo
                 if (cliente == null)
                 {
                     _logger.LogWarning("Cliente con ID {IdCliente} no encontrado", clienteId);
                     return View("Error");
                 }
 
-                // Crear el objeto Presupuesto actualizado
                 var presupuesto = new Presupuestos(
                     id,
                     cliente,
@@ -150,10 +127,8 @@ namespace tl2_tp6_2024_Days45.Controllers
                     fechaCreacion
                 );
 
-                // Llamamos al repositorio para modificar el presupuesto
                 _repositorioPresupuestos.ModificarPresupuesto(presupuesto);
 
-                // Log y redirección
                 _logger.LogInformation("Presupuesto con ID {Id} modificado", id);
                 return RedirectToAction("Index");
             }
@@ -165,12 +140,11 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpGet]
-        public IActionResult Eliminar(int id, int clienteId)
+        public IActionResult Eliminar(int id)
         {
             try
             {
-                var cliente = _repositorioClientes.ObtenerCliente(clienteId);
-                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id, cliente);
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
                 if (presupuesto == null)
                 {
                     _logger.LogWarning(
@@ -179,6 +153,7 @@ namespace tl2_tp6_2024_Days45.Controllers
                     );
                     return RedirectToAction("Index");
                 }
+
                 return View(presupuesto);
             }
             catch (Exception ex)
@@ -209,13 +184,12 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpGet]
-        public IActionResult AgregarProducto(int id, int clienteId)
+        public IActionResult AgregarProducto(int id)
         {
             try
             {
-                var cliente = _repositorioClientes.ObtenerCliente(clienteId);
-                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id, cliente);
-                ViewBag.Productos = new ProductoRepository().ListarProductos(); // Lista de productos disponibles
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                ViewBag.Productos = _repositorioProductos.ListarProductos(); // Lista de productos disponibles
                 return View(presupuesto);
             }
             catch (Exception ex)
@@ -234,7 +208,7 @@ namespace tl2_tp6_2024_Days45.Controllers
         {
             try
             {
-                var producto = new ProductoRepository().ObtenerProducto(idProducto);
+                var producto = _repositorioProductos.ObtenerProducto(idProducto);
                 _repositorioPresupuestos.AgregarProductoAPresupuesto(
                     idPresupuesto,
                     producto,
@@ -259,16 +233,16 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpGet]
-        public IActionResult VerDetalle(int id, int clienteId)
+        public IActionResult VerDetalle(int id)
         {
             try
             {
-                var cliente = _repositorioClientes.ObtenerCliente(clienteId);
-                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id, cliente);
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
                 if (presupuesto == null)
                 {
                     return NotFound();
                 }
+
                 return View(presupuesto);
             }
             catch (Exception ex)
