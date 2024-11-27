@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using EspacioTp5;
+using EspacioTp5.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using rapositoriosTP5;
@@ -34,31 +35,42 @@ namespace tl2_tp6_2024_Days45.Controllers
         public IActionResult Crear()
         {
             var clientes = _repositorioClientes.ListarClientes();
-            ViewBag.Clientes = clientes;
-            return View();
+            var viewModel = new PresupuestosViewModel { Clientes = clientes };
+            return View(viewModel);
         }
 
         [HttpPost]
-        public IActionResult Crear(int clienteId, DateTime fechaCreacion)
+        public IActionResult Crear(PresupuestosViewModel model)
         {
             try
             {
-                var cliente = _repositorioClientes.ObtenerCliente(clienteId);
+                if (ModelState.IsValid)
+                {
+                    var cliente = _repositorioClientes.ObtenerCliente(model.IdClienteSeleccionado);
 
-                var presupuesto = new Presupuestos(
-                    0,
-                    cliente,
-                    new List<PresupuestosDetalle>(),
-                    fechaCreacion
-                );
+                    // Crear presupuesto con la fecha proporcionada por el usuario
+                    var presupuesto = new Presupuestos(
+                        0,
+                        cliente,
+                        new List<PresupuestosDetalle>(),
+                        model.FechaCreacion // Fecha proporcionada por el usuario
+                    );
 
-                _repositorioPresupuestos.CrearPresupuesto(presupuesto);
+                    _repositorioPresupuestos.CrearPresupuesto(presupuesto);
 
-                _logger.LogInformation(
-                    "Presupuesto creado para {NombreDestinatario}",
-                    cliente.Nombre
-                );
-                return RedirectToAction("Index");
+                    _logger.LogInformation(
+                        "Presupuesto creado para {NombreDestinatario}",
+                        cliente.Nombre
+                    );
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    // Si el modelo no es válido, pasar la lista de clientes
+                    var clientes = _repositorioClientes.ListarClientes();
+                    model.Clientes = clientes;
+                    return View(model); // Retornar la vista con errores de validación
+                }
             }
             catch (Exception ex)
             {
@@ -82,21 +94,19 @@ namespace tl2_tp6_2024_Days45.Controllers
                     );
                 }
 
+                // Obtener la lista de clientes
                 var clientes = _repositorioClientes.ListarClientes();
 
-                // Generar manualmente el HTML de las opciones
-                var opcionesClientes = "";
-                foreach (var cliente in clientes)
+                // Crear un viewModel para pasar la información del presupuesto y clientes
+                var viewModel = new PresupuestosViewModel
                 {
-                    var seleccionado =
-                        cliente.IdCliente == presupuesto.Cliente.IdCliente ? "selected" : "";
-                    opcionesClientes +=
-                        $"<option value='{cliente.IdCliente}' {seleccionado}>{cliente.Nombre}</option>";
-                }
+                    IdPresupuesto = presupuesto.IdPresupuesto,
+                    FechaCreacion = presupuesto.FechaCreacion,
+                    IdClienteSeleccionado = presupuesto.Cliente.IdCliente,
+                    Clientes = clientes
+                };
 
-                ViewBag.OpcionesClientes = opcionesClientes;
-                ViewBag.Presupuesto = presupuesto;
-                return View();
+                return View(viewModel); // Se pasa el viewModel con la información del presupuesto y clientes
             }
             catch (Exception ex)
             {
@@ -109,32 +119,52 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpPost]
-        public IActionResult Modificar(int id, int clienteId, DateTime fechaCreacion)
+        public IActionResult Modificar(PresupuestosViewModel model)
         {
             try
             {
-                var cliente = _repositorioClientes.ObtenerCliente(clienteId);
-                if (cliente == null)
+                if (ModelState.IsValid)
                 {
-                    _logger.LogWarning("Cliente con ID {IdCliente} no encontrado", clienteId);
-                    return View("Error");
+                    var cliente = _repositorioClientes.ObtenerCliente(model.IdClienteSeleccionado);
+                    if (cliente == null)
+                    {
+                        _logger.LogWarning(
+                            "Cliente con ID {IdCliente} no encontrado",
+                            model.IdClienteSeleccionado
+                        );
+                        return View("Error");
+                    }
+
+                    var presupuesto = new Presupuestos(
+                        model.IdPresupuesto,
+                        cliente,
+                        new List<PresupuestosDetalle>(),
+                        model.FechaCreacion // Usamos la fecha proporcionada por el usuario
+                    );
+
+                    _repositorioPresupuestos.ModificarPresupuesto(presupuesto);
+
+                    _logger.LogInformation(
+                        "Presupuesto con ID {Id} modificado",
+                        model.IdPresupuesto
+                    );
+                    return RedirectToAction("Index");
                 }
-
-                var presupuesto = new Presupuestos(
-                    id,
-                    cliente,
-                    new List<PresupuestosDetalle>(),
-                    fechaCreacion
-                );
-
-                _repositorioPresupuestos.ModificarPresupuesto(presupuesto);
-
-                _logger.LogInformation("Presupuesto con ID {Id} modificado", id);
-                return RedirectToAction("Index");
+                else
+                {
+                    // Si el modelo no es válido, volver a cargar los clientes
+                    var clientes = _repositorioClientes.ListarClientes();
+                    model.Clientes = clientes;
+                    return View(model); // Retorna la vista con los errores de validación
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al modificar el presupuesto con ID {Id}", id);
+                _logger.LogError(
+                    ex,
+                    "Error al modificar el presupuesto con ID {Id}",
+                    model.IdPresupuesto
+                );
                 return View("Error");
             }
         }
@@ -168,10 +198,20 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpPost]
-        public IActionResult Eliminar(int id, string confirmacion)
+        public IActionResult EliminarPresupuesto(int id)
         {
             try
             {
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null)
+                {
+                    _logger.LogWarning(
+                        "Intento de eliminar un presupuesto inexistente con ID {Id}",
+                        id
+                    );
+                    return RedirectToAction("Index");
+                }
+
                 _repositorioPresupuestos.EliminarPresupuesto(id);
                 _logger.LogInformation("Presupuesto con ID {Id} eliminado", id);
                 return RedirectToAction("Index");
@@ -179,7 +219,10 @@ namespace tl2_tp6_2024_Days45.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al eliminar el presupuesto con ID {Id}", id);
-                return View("Error");
+                return View(
+                    "Error",
+                    new ErrorViewModel { ErrorMessage = "Error al eliminar el presupuesto." }
+                );
             }
         }
 

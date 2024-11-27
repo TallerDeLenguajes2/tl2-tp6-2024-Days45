@@ -1,20 +1,28 @@
-@model EspacioTp5.Presupuestos
+@model EspacioTp5.ViewModels.PresupuestosViewModel
 
-<h1>Modificar Presupuesto</h1>
+@{
+    ViewData["Title"] = "Modificar Presupuesto";
+}
 
-<form method="post" action="/Presupuestos/Modificar">
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Modificar" method="post">
+    <input type="hidden" name="idPresupuesto" value="@Model.IdPresupuesto" />
+
     <div class="form-group">
-        <label for="clienteId">Cliente</label>
-        <select class="form-control" id="clienteId" name="clienteId" required>
-            @Html.Raw(ViewBag.OpcionesClientes)
+        <label for="FechaCreacion">Fecha de Creación</label>
+        <input type="date" class="form-control" id="FechaCreacion" name="fechaCreacion" value="@Model.FechaCreacion.ToString("yyyy-MM-dd")" required />
+    </div>
+
+    <div class="form-group">
+        <label for="IdClienteSeleccionado">Cliente</label>
+        <select class="form-control" id="IdClienteSeleccionado" name="IdClienteSeleccionado">
+            @foreach (var cliente in Model.Clientes)
+            {
+                <option value="@cliente.IdCliente">@cliente.Nombre</option>
+            }
         </select>
     </div>
 
-    <div class="form-group">
-        <label for="fechaCreacion">Fecha de Creación</label>
-        <input type="date" class="form-control" id="fechaCreacion" name="fechaCreacion" 
-               value="@Model.FechaCreacion.ToString("yyyy-MM-dd")" required />
-    </div>
-
-    <button type="submit" class="btn btn-warning">Modificar</button>
+    <button type="submit" class="btn btn-primary">Modificar</button>
 </form>

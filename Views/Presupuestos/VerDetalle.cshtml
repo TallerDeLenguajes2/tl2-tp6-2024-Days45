@@ -1,56 +1,45 @@
 @model EspacioTp5.Presupuestos
 
 @{
-    ViewData["Title"] = "Detalle del Presupuesto";
+    ViewData["Title"] = "Ver Detalle del Presupuesto";
 }
 
-<section class="container py-4">
-    <h2 class="text-center my-4">Detalle del Presupuesto</h2>
+<h2>@ViewData["Title"]</h2>
 
-    <div class="card mx-auto mb-4" style="max-width: 800px;">
-        <div class="card-body">
-            <h5 class="card-title">Presupuesto ID: @Model.IdPresupuesto</h5>
-            <p><strong>Cliente:</strong> @Model.Cliente.Nombre</p>  <!-- Cliente Nombre -->
-            <p><strong>Email del Cliente:</strong> @Model.Cliente.Email</p>  <!-- Email del Cliente -->
-            <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
-            <p><strong>Cantidad de Productos:</strong> @Model.CantidadProductos()</p>
-            <p><strong>Monto Total (sin IVA):</strong> @(Model.MontoPresupuesto().ToString("N2"))</p>
-            <p><strong>Monto Total (con IVA):</strong> @(Model.MontoPresupuestoConIva().ToString("N2"))</p>
-        </div>
-    </div>
+<div class="mb-3">
+    <strong>Cliente:</strong> @Model.Cliente.Nombre
+</div>
 
-    @if (Model.Detalle != null && Model.Detalle.Any())
-    {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Precio Unitario</th>
-                    <th>Cantidad</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.Detalle)
-                {
-                    <tr>
-                        <td>@item.Producto.Descripcion</td>
-                        <td>@(item.Producto.Precio.ToString("N2"))</td>
-                        <td>@item.Cantidad</td>
-                        <td>@((item.Producto.Precio * item.Cantidad).ToString("N2"))</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="alert alert-info text-center">
-            No hay productos asociados a este presupuesto.
-        </div>
-    }
+<div class="mb-3">
+    <strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy")
+</div>
 
-    <div class="text-center mt-4">
-        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista</a>
-    </div>
-</section>
+<h3>Detalles del Presupuesto</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var detalle in Model.Detalle)
+        {
+            <tr>
+                <td>@detalle.Producto.Descripcion</td>
+                <td>@detalle.Cantidad</td>
+                <td>@detalle.Producto.Precio</td> <!-- Muestra solo el precio sin formato -->
+                <td>@(detalle.Cantidad * detalle.Producto.Precio)</td> <!-- Muestra solo el total sin formato -->
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="mb-3">
+    <strong>Total del Presupuesto:</strong> @Model.MontoPresupuesto() <!-- Muestra solo el total sin formato -->
+</div>
+
+<a href="@Url.Action("Index")" class="btn btn-secondary">Volver a la Lista</a>

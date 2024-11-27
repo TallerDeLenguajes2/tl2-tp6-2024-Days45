@@ -9,10 +9,13 @@ namespace rapositoriosTP5
     {
         private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
 
-        /*CREATE TABLE Productos ( como esta formada la tabla productos en la base de datos
-    idProducto  INTEGER PRIMARY KEY AUTOINCREMENT,
-    Descripcion TEXT    NOT NULL,
-    Precio      INTEGER NOT NULL);*/
+        /* La tabla en la base de datos está definida de la siguiente manera:
+        CREATE TABLE Productos (
+            idProducto INTEGER PRIMARY KEY AUTOINCREMENT,
+            Descripcion TEXT NOT NULL,
+            Precio REAL NOT NULL
+        ); */
+
         public void CrearProducto(Productos producto)
         {
             using (var connection = new SqliteConnection(cadenaConexion))
@@ -27,12 +30,12 @@ namespace rapositoriosTP5
                         "@Descripcion",
                         producto.Descripcion ?? string.Empty
                     );
+                    // Usar decimal para el precio
                     command.Parameters.AddWithValue("@Precio", producto.Precio);
                     command.ExecuteNonQuery();
                 }
             }
         }
-
 
         public void ModificarProducto(int id, Productos producto)
         {
@@ -45,6 +48,7 @@ namespace rapositoriosTP5
                 {
                     command.Parameters.AddWithValue("@idProducto", id);
                     command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
+                    // Usar decimal para el precio
                     command.Parameters.AddWithValue("@precio", producto.Precio);
                     command.ExecuteNonQuery();
                 }
@@ -68,7 +72,7 @@ namespace rapositoriosTP5
                             var producto = new Productos(
                                 Convert.ToInt32(reader["idProducto"]),
                                 reader["descripcion"].ToString(),
-                                Convert.ToInt32(reader["precio"])
+                                Convert.ToDecimal(reader["precio"]) // Leer el precio como decimal
                             );
                             productos.Add(producto);
                         }
@@ -96,7 +100,7 @@ namespace rapositoriosTP5
                             producto = new Productos(
                                 Convert.ToInt32(reader["idProducto"]),
                                 reader["descripcion"].ToString(),
-                                Convert.ToInt32(reader["precio"])
+                                Convert.ToDecimal(reader["precio"]) // Leer el precio como decimal
                             );
                         }
                     }
@@ -129,7 +133,7 @@ namespace rapositoriosTP5
                             sqlCmd.ExecuteNonQuery();
                         }
 
-                        transaction.Commit(); 
+                        transaction.Commit();
                     }
                     catch (Exception ex)
                     {
@@ -138,8 +142,6 @@ namespace rapositoriosTP5
                     }
                 }
             }
-
         }
-
     }
 }

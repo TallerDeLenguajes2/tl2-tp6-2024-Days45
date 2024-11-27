@@ -4,26 +4,24 @@
     ViewData["Title"] = "Eliminar Presupuesto";
 }
 
-<section class="container py-4">
-    <h2 class="text-center my-4">Eliminar Presupuesto</h2>
-    <div class="alert alert-warning text-center">
-        <p>¿Estás seguro de que deseas eliminar el presupuesto con la siguiente información?</p>
+@if (Model == null)
+{
+    <div class="alert alert-danger">
+        No se encontró el presupuesto solicitado.
+    </div>
+}
+else
+{
+    <h2>@ViewData["Title"]</h2>
+
+    <div class="alert alert-warning" role="alert">
+        ¿Estás seguro de que deseas eliminar el presupuesto de @Model.Cliente.Nombre?
     </div>
 
-    <div class="card mx-auto" style="max-width: 500px;">
-        <div class="card-body">
-            <h5 class="card-title">Detalles del Presupuesto</h5>
-            <p><strong>ID:</strong> @Model.IdPresupuesto</p>
-            <p><strong>Destinatario:</strong> @Model.Cliente.Nombre</p>  <!-- Actualizado para mostrar el nombre del cliente -->
-            <p><strong>Email:</strong> @Model.Cliente.Email</p>  <!-- Muestra el email del cliente -->
-            <p><strong>Teléfono:</strong> @Model.Cliente.Telefono</p>  <!-- Muestra el teléfono del cliente -->
-            <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
-        </div>
-    </div>
+    <form asp-action="EliminarPresupuesto" method="post">
+    <input type="hidden" name="id" value="@Model.IdPresupuesto" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+</form>
 
-    <form asp-action="Eliminar" asp-controller="Presupuestos" method="post" class="text-center mt-4">
-        <input type="hidden" name="id" value="@Model.IdPresupuesto" />
-        <button type="submit" class="btn btn-danger">Eliminar</button>
-        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-secondary">Cancelar</a>
-    </form>
-</section>
+}

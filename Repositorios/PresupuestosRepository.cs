@@ -9,22 +9,32 @@ namespace rapositoriosTP5
     {
         private string cadenaConexion = "Data Source=db/Tienda.db;Cache=Shared";
 
-        // Crear presupuesto
         public void CrearPresupuesto(Presupuestos presupuesto)
         {
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                string queryString =
-                    "INSERT INTO Presupuestos (IdCliente, FechaCreacion) VALUES (@IdCliente, @Fecha);";
-                using (var command = new SqliteCommand(queryString, connection))
+                try
                 {
-                    command.Parameters.AddWithValue("@IdCliente", presupuesto.Cliente.IdCliente);
-                    command.Parameters.AddWithValue(
-                        "@Fecha",
-                        presupuesto.FechaCreacion.ToString("yyyy-MM-dd")
-                    );
-                    command.ExecuteNonQuery();
+                    string queryString =
+                        "INSERT INTO Presupuestos (IdCliente, FechaCreacion) VALUES (@IdCliente, @Fecha);";
+                    using (var command = new SqliteCommand(queryString, connection))
+                    {
+                        command.Parameters.AddWithValue(
+                            "@IdCliente",
+                            presupuesto.Cliente.IdCliente
+                        );
+                        command.Parameters.AddWithValue(
+                            "@Fecha",
+                            presupuesto.FechaCreacion.ToString("yyyy-MM-dd")
+                        );
+                        command.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log detallado del error para entender qué sucede
+                    throw new Exception("Error al guardar el presupuesto: " + ex.Message, ex);
                 }
             }
         }
@@ -73,14 +83,25 @@ namespace rapositoriosTP5
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
+
                 string query =
-                    @"SELECT P.idPresupuesto, C.idCliente, C.Nombre, C.Email, C.Telefono, P.FechaCreacion, 
-                                PD.idProducto, PD.Cantidad, Pr.Descripcion, Pr.Precio
-                         FROM Presupuestos P
-                         INNER JOIN Clientes C ON P.idCliente = C.idCliente
-                         INNER JOIN PresupuestosDetalle PD ON P.idPresupuesto = PD.idPresupuesto
-                         INNER JOIN Productos Pr ON PD.idProducto = Pr.idProducto
-                         WHERE P.idPresupuesto = @id";
+                    @"
+            SELECT 
+                P.idPresupuesto, 
+                C.idCliente, 
+                C.Nombre, 
+                C.Email, 
+                C.Telefono, 
+                P.FechaCreacion, 
+                PD.idProducto, 
+                PD.Cantidad, 
+                Pr.Descripcion, 
+                Pr.Precio
+            FROM Presupuestos P
+            INNER JOIN Clientes C ON P.idCliente = C.idCliente
+            LEFT JOIN PresupuestosDetalle PD ON P.idPresupuesto = PD.idPresupuesto
+            LEFT JOIN Productos Pr ON PD.idProducto = Pr.idProducto
+            WHERE P.idPresupuesto = @id";
 
                 using (var command = new SqliteCommand(query, connection))
                 {
@@ -100,14 +121,18 @@ namespace rapositoriosTP5
                                 fechaCreacion = reader.GetDateTime(5); // Leer la fecha de creación
                             }
 
-                            // Crear el detalle del presupuesto
-                            var producto = new Productos(
-                                reader.GetInt32(6), // idProducto
-                                reader.GetString(8), // Descripción del producto
-                                reader.GetInt32(9) // Precio del producto
-                            );
-                            int cantidad = reader.GetInt32(7); // Obtener la cantidad
-                            detalles.Add(new PresupuestosDetalle(producto, cantidad)); // Crear el detalle
+                            if (!reader.IsDBNull(6)) // Validar si hay productos en el detalle
+                            {
+                                // Crear el detalle del presupuesto
+                                var producto = new Productos(
+                                    reader.GetInt32(6), // idProducto
+                                    reader.GetString(8), // Descripción del producto
+                                    reader.GetDecimal(9) // Precio del producto
+                                );
+
+                                int cantidad = reader.GetInt32(7); // Obtener la cantidad
+                                detalles.Add(new PresupuestosDetalle(producto, cantidad));
+                            }
                         }
                     }
                 }
