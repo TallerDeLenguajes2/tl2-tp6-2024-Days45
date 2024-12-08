@@ -31,6 +31,7 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
+
         //index y crear hechos: el resto falta probar
         [HttpGet]
         public IActionResult Crear()
@@ -61,7 +62,11 @@ namespace tl2_tp6_2024_Days45.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el producto con ID {ProductoId} para su modificación", id);
+                _logger.LogError(
+                    ex,
+                    "Error al obtener el producto con ID {ProductoId} para su modificación",
+                    id
+                );
                 return View("Error");
             }
         }
@@ -71,20 +76,34 @@ namespace tl2_tp6_2024_Days45.Controllers
         {
             try
             {
+                // Verifica si el modelo es válido
+                if (!ModelState.IsValid)
+                {
+                    return View(); // Retorna a la vista actual si hay errores de validación
+                }
+
+                // Valida campos específicos de manera personalizada
                 if (string.IsNullOrEmpty(descripcion) || precio < 0)
                 {
                     ModelState.AddModelError("", "Descripción y precio son requeridos.");
-                    return View(); 
+                    return View(); // Retorna a la vista con mensajes de error
                 }
+
+                // Crea el objeto producto y lo actualiza en el repositorio
                 var producto = new Productos(idProducto, descripcion, precio);
                 _repositorioProductos.ModificarProducto(idProducto, producto);
                 _logger.LogInformation("Producto con ID {ProductoId} modificado", idProducto);
-                return RedirectToAction("Index"); 
+
+                return RedirectToAction("Index"); // Redirige al índice si todo es correcto
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al modificar el producto con ID {ProductoId}", idProducto);
-                return View("Error"); 
+                _logger.LogError(
+                    ex,
+                    "Error al modificar el producto con ID {ProductoId}",
+                    idProducto
+                );
+                return View("Error"); // Redirige a una vista de error en caso de excepciones
             }
         }
 

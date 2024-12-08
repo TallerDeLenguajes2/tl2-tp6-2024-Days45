@@ -37,6 +37,11 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpPost]
         public IActionResult Crear(string nombre, string email, string telefono)
         {
+            if (!ModelState.IsValid) // Verifica la validez del modelo
+            {
+                return View(); // Si hay errores, regresa a la vista con el estado actual
+            }
+
             if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(email))
             {
                 ModelState.AddModelError("", "El nombre y el email son obligatorios.");
@@ -46,14 +51,9 @@ namespace tl2_tp6_2024_Days45.Controllers
             // Crear una nueva instancia del cliente usando el constructor sin ID
             var cliente = new Clientes(nombre, email, telefono);
 
-            if (ModelState.IsValid)
-            {
-                _repositorioClientes.CrearCliente(cliente);
-                _logger.LogInformation("Cliente creado: {Nombre}", cliente.Nombre);
-                return RedirectToAction("Index");
-            }
-
-            return View(cliente);
+            _repositorioClientes.CrearCliente(cliente);
+            _logger.LogInformation("Cliente creado: {Nombre}", cliente.Nombre);
+            return RedirectToAction("Index");
         }
 
         [HttpGet]
@@ -72,7 +72,11 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpPost]
         public IActionResult Modificar(int idCliente, string nombre, string email, string telefono)
         {
-            // Validar que los campos requeridos no sean nulos o vacíos
+            if (!ModelState.IsValid) // Verifica la validez del modelo
+            {
+                return View(); // Si hay errores, regresa a la vista con el estado actual
+            }
+
             if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(email))
             {
                 ModelState.AddModelError("", "El nombre y el email son obligatorios.");
@@ -82,15 +86,9 @@ namespace tl2_tp6_2024_Days45.Controllers
             // Crear una nueva instancia de Clientes usando el constructor
             var clienteActualizar = new Clientes(idCliente, nombre, email, telefono);
 
-            if (ModelState.IsValid)
-            {
-                // Llama al método ModificarCliente en el repositorio
-                _repositorioClientes.ModificarCliente(idCliente, clienteActualizar);
-                _logger.LogInformation("Cliente modificado: {Nombre}", nombre);
-                return RedirectToAction("Index");
-            }
-
-            return View(); // Retorna la vista con el error
+            _repositorioClientes.ModificarCliente(idCliente, clienteActualizar);
+            _logger.LogInformation("Cliente modificado: {Nombre}", nombre);
+            return RedirectToAction("Index");
         }
 
         [HttpGet]
