@@ -1,7 +1,14 @@
+using EspacioTp5; // Espacio de nombres donde están las clases del modelo
+using rapositoriosTP5; // Espacio de nombres donde están los repositorios
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Registrar repositorios para inyección de dependencias
+builder.Services.AddSingleton<IProductoRepository, ProductoRepository>();
+builder.Services.AddSingleton<IPresupuestoRepository, PresupuestoRepository>();
 
 var app = builder.Build();
 
@@ -9,19 +16,19 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    app.UseHsts(); // Configuración para HSTS
 }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseHttpsRedirection(); // Forzar redirección a HTTPS
+app.UseStaticFiles(); // Habilitar archivos estáticos
 
-app.UseRouting();
+app.UseRouting(); // Habilitar routing
+app.UseAuthorization(); // Middleware de autorización
 
-app.UseAuthorization();
-
+// Configurar ruta predeterminada
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Presupuestos}/{action=Index}/{id?}");
+    pattern: "{controller=Productos}/{action=Index}/{id?}");
 
+// Ejecutar la aplicación
 app.Run();

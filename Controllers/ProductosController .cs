@@ -8,12 +8,12 @@ namespace tl2_tp6_2024_Days45.Controllers
     public class ProductosController : Controller
     {
         private readonly ILogger<ProductosController> _logger;
-        private readonly ProductoRepository _repositorioProductos;
+        private readonly IProductoRepository _repositorioProductos;
 
-        public ProductosController(ILogger<ProductosController> logger)
+        public ProductosController(ILogger<ProductosController> logger, IProductoRepository repositorioProductos)
         {
             _logger = logger;
-            _repositorioProductos = new ProductoRepository();
+            _repositorioProductos = repositorioProductos;
         }
 
         [HttpGet]
@@ -31,7 +31,7 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
-        //index y crear hechos: el resto falta probar
+
         [HttpGet]
         public IActionResult Crear()
         {

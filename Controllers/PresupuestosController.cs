@@ -8,12 +8,12 @@ namespace tl2_tp6_2024_Days45.Controllers
     public class PresupuestosController : Controller
     {
         private readonly ILogger<PresupuestosController> _logger;
-        private readonly PresupuestoRepository _repositorioPresupuestos;
+        private readonly IPresupuestoRepository _repositorioPresupuestos;
 
-        public PresupuestosController(ILogger<PresupuestosController> logger)
+        public PresupuestosController(ILogger<PresupuestosController> logger, IPresupuestoRepository repositorioPresupuestos)
         {
             _logger = logger;
-            _repositorioPresupuestos = new PresupuestoRepository();
+            _repositorioPresupuestos = repositorioPresupuestos;
         }
 
         [HttpGet]
@@ -26,7 +26,6 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpGet]
         public IActionResult Crear()
         {
-            // Devolvemos el formulario para crear un presupuesto
             return View(new Presupuestos(0, string.Empty, DateTime.Now));
         }
 
@@ -35,10 +34,7 @@ namespace tl2_tp6_2024_Days45.Controllers
         {
             try
             {
-                // Crear un nuevo objeto Presupuestos con los datos recibidos
                 var presupuesto = new Presupuestos(nombreDestinatario, fechaCreacion);
-
-                // Llamamos al repositorio para guardar el presupuesto
                 _repositorioPresupuestos.CrearPresupuesto(presupuesto);
 
                 _logger.LogInformation("Presupuesto creado para {NombreDestinatario}", presupuesto.NombreDestinatario);
@@ -50,7 +46,6 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
-
 
         [HttpGet]
         public IActionResult Modificar(int id)
@@ -72,13 +67,9 @@ namespace tl2_tp6_2024_Days45.Controllers
         {
             try
             {
-                // Crear el objeto Presupuesto con los nuevos datos
                 var presupuesto = new Presupuestos(id, nombreDestinatario, fechaCreacion);
-
-                // Llamamos a la función de repositorio para modificar el presupuesto
                 _repositorioPresupuestos.ModificarPresupuesto(presupuesto);
 
-                // Log y redirección
                 _logger.LogInformation("Presupuesto con ID {Id} modificado", id);
                 return RedirectToAction("Index");
             }
@@ -88,6 +79,7 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
+
         [HttpGet]
         public IActionResult Eliminar(int id)
         {
@@ -108,7 +100,6 @@ namespace tl2_tp6_2024_Days45.Controllers
             }
         }
 
-        // Método POST para realizar la eliminación
         [HttpPost]
         public IActionResult Eliminar(int id, string confirmacion)
         {
@@ -157,12 +148,12 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
+
         [HttpGet]
         public IActionResult VerDetalle(int id)
         {
             try
             {
-                // Obtener el presupuesto usando el repositorio
                 var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
                 if (presupuesto == null)
                 {

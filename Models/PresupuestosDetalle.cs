@@ -1,8 +1,3 @@
-/*
-PresupuestosDetalle
-○ Productos producto
-○ int cantidad
-*/
 using System;
 using System.Text.Json.Serialization;
 namespace EspacioTp5;

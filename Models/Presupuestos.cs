@@ -1,13 +1,3 @@
-/*
-*Presupuestos
-○ int IdPresupuesto
-○ string nombreDestinatario
-○ List<PresupuestoDetalle> detalle
-○ Metodos
-■ MontoPresupuesto ()
-■ MontoPresupuestoConIva()
-■ CantidadProductos ()
-*/
 using System;
 using System.Text.Json.Serialization;
 namespace EspacioTp5;
