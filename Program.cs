@@ -9,6 +9,7 @@ builder.Services.AddControllersWithViews();
 // Registrar repositorios para inyección de dependencias
 builder.Services.AddSingleton<IProductoRepository, ProductoRepository>();
 builder.Services.AddSingleton<IPresupuestoRepository, PresupuestoRepository>();
+builder.Services.AddSingleton<IUsuariosRepository, UsuariosRepository>();
 
 var app = builder.Build();
 

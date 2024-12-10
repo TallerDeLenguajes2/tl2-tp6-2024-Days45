@@ -2,7 +2,7 @@ using System;
 namespace EspacioTp5;
 public class Usuarios
 {
-    public int Id { get; private set; }  
+    public int IdUsuario { get; private set; }  
     public string Nombre { get; private set; }
     public string Usuario { get; private set; }  
     public string Contraseña { get; private set; }
@@ -16,7 +16,7 @@ public class Usuarios
     }
     public Usuarios(int id, string nombre, string usuarioNombre, string contraseña, string rol)
     {
-        Id = id;
+        IdUsuario = id;
         Nombre = nombre;
         Usuario = usuarioNombre;
         Contraseña = contraseña;
