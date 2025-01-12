@@ -1,47 +1,51 @@
 using System;
-using System.Text.Json.Serialization;
-namespace EspacioTp5;
+using System.Collections.Generic;
 
-public class Presupuestos
+namespace EspacioTp5
 {
-    public Presupuestos()
+    public class Presupuestos
     {
-        Detalle = new List<PresupuestosDetalle>();
-    }
-    public Presupuestos(int idPresupuesto, string nombreDestinatario, DateTime fechaCreacion, List<PresupuestosDetalle> detalle = null)
-    {
-        IdPresupuesto = idPresupuesto;
-        NombreDestinatario = nombreDestinatario;
-        FechaCreacion = fechaCreacion;
-        Detalle = detalle ?? new List<PresupuestosDetalle>();
-    }
-    public Presupuestos(string nombreDestinatario, DateTime fechaCreacion)
-    {
-        NombreDestinatario = nombreDestinatario;
-        FechaCreacion = fechaCreacion;
-    }
-    public int IdPresupuesto { get; private set; }
-    public string NombreDestinatario { get; private set; }
-    public List<PresupuestosDetalle> Detalle { get; private set; }
-    public DateTime FechaCreacion { get; private set; }
-    public double MontoPresupuesto()
-    {
-        double monto = 0.0;
-        foreach (var item in Detalle)
+        public int IdPresupuesto { get; private set; }
+        public DateTime FechaCreacion { get; private set; }
+        public Usuarios Usuario { get; private set; }  
+        public List<PresupuestosDetalle> Detalle { get; private set; }
+
+        // Constructor para nuevo presupuesto (sin ID aún)
+        public Presupuestos(DateTime fechaCreacion, Usuarios usuario, List<PresupuestosDetalle> detalle = null)
         {
-            monto += (item.Producto.Precio * item.Cantidad);
+            FechaCreacion = fechaCreacion;
+            Usuario = usuario;
+            Detalle = detalle ?? new List<PresupuestosDetalle>();
         }
-        return monto;
-    }
 
-    public double MontoPresupuestoConIva()
-    {
-        const double IVA = 0.21;
-        return MontoPresupuesto() * (1 + IVA);
-    }
+        // Constructor con ID (para modificar o cargar desde base de datos)
+        public Presupuestos(int idPresupuesto, DateTime fechaCreacion, Usuarios usuario, List<PresupuestosDetalle> detalle = null)
+        {
+            IdPresupuesto = idPresupuesto;
+            FechaCreacion = fechaCreacion;
+            Usuario = usuario;
+            Detalle = detalle ?? new List<PresupuestosDetalle>();
+        }
 
-    public int CantidadProductos()
-    {
-        return Detalle.Count();
+        public double MontoPresupuesto()
+        {
+            double monto = 0;
+            foreach (var item in Detalle)
+            {
+                monto += item.Producto.Precio * item.Cantidad;
+            }
+            return monto;
+        }
+
+        public double MontoPresupuestoConIva()
+        {
+            const double IVA = 0.21;
+            return MontoPresupuesto() * (1 + IVA);
+        }
+
+        public int CantidadProductos()
+        {
+            return Detalle.Count;
+        }
     }
 }

@@ -7,20 +7,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Habilitar servicios de sesiones
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tiempo de expiración de la sesión
-    options.Cookie.HttpOnly = true; // Solo accesible desde HTTP, no JavaScript
-    options.Cookie.IsEssential = true; // Necesario incluso si el usuario no acepta cookies
+    options.IdleTimeout = TimeSpan.FromMinutes(30); 
+    options.Cookie.HttpOnly = true; 
+    options.Cookie.IsEssential = true; 
 });
 
 // Acceso al contexto HTTP
 builder.Services.AddHttpContextAccessor();
 
 // Registrar repositorios personalizados
-builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
-builder.Services.AddScoped<IPresupuestoRepository, PresupuestoRepository>();
-builder.Services.AddScoped<IUsuariosRepository, RepositorioUsuariosEnMemoria>();
-// Servicios de autenticación personalizados (si corresponde implementarlos)
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddSingleton<IProductoRepository, ProductoRepository>();
+builder.Services.AddSingleton<IPresupuestoRepository, PresupuestoRepository>();
+builder.Services.AddScoped<IUsuariosRepository, RepositorioUsuariosSqlite>();
 
 // Agregar servicios de controladores y vistas
 builder.Services.AddControllersWithViews();

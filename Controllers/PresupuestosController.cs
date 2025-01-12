@@ -9,11 +9,13 @@ namespace tl2_tp6_2024_Days45.Controllers
     {
         private readonly ILogger<PresupuestosController> _logger;
         private readonly IPresupuestoRepository _repositorioPresupuestos;
+        private readonly IUsuariosRepository _repositorioUsuarios; // Asumimos que tienes un repositorio de usuarios
 
-        public PresupuestosController(ILogger<PresupuestosController> logger, IPresupuestoRepository repositorioPresupuestos)
+        public PresupuestosController(ILogger<PresupuestosController> logger, IPresupuestoRepository repositorioPresupuestos, IUsuariosRepository repositorioUsuarios)
         {
             _logger = logger;
             _repositorioPresupuestos = repositorioPresupuestos;
+            _repositorioUsuarios = repositorioUsuarios;
         }
 
         [HttpGet]
@@ -26,18 +28,26 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpGet]
         public IActionResult Crear()
         {
-            return View(new Presupuestos(0, string.Empty, DateTime.Now));
+            return View(new Presupuestos(DateTime.Now, new Usuarios("", "", "", ""))); // Asegúrate de que los parámetros estén correctos
         }
 
         [HttpPost]
-        public IActionResult Crear(string nombreDestinatario, DateTime fechaCreacion)
+        public IActionResult Crear(DateTime fechaCreacion, int idUsuario)
         {
             try
             {
-                var presupuesto = new Presupuestos(nombreDestinatario, fechaCreacion);
+                // Obtener el usuario por su id
+                var usuario = _repositorioPresupuestos.ObtenerUsuario(idUsuario);
+                if (usuario == null)
+                {
+                    _logger.LogWarning("Usuario con ID {IdUsuario} no encontrado", idUsuario);
+                    return View("Error");
+                }
+
+                var presupuesto = new Presupuestos(fechaCreacion, usuario);
                 _repositorioPresupuestos.CrearPresupuesto(presupuesto);
 
-                _logger.LogInformation("Presupuesto creado para {NombreDestinatario}", presupuesto.NombreDestinatario);
+                _logger.LogInformation("Presupuesto creado para el usuario con ID {IdUsuario}", idUsuario);
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
@@ -47,12 +57,18 @@ namespace tl2_tp6_2024_Days45.Controllers
             }
         }
 
+
+
         [HttpGet]
         public IActionResult Modificar(int id)
         {
             try
             {
                 var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null)
+                {
+                    return NotFound(); // Si no se encuentra el presupuesto, devolvemos un 404
+                }
                 return View(presupuesto);
             }
             catch (Exception ex)
@@ -63,11 +79,19 @@ namespace tl2_tp6_2024_Days45.Controllers
         }
 
         [HttpPost]
-        public IActionResult Modificar(int id, string nombreDestinatario, DateTime fechaCreacion)
+        public IActionResult Modificar(int id, DateTime fechaCreacion, int idUsuario)
         {
             try
             {
-                var presupuesto = new Presupuestos(id, nombreDestinatario, fechaCreacion);
+                // Obtener el usuario por su id
+                var usuario = _repositorioPresupuestos.ObtenerUsuario(idUsuario);
+                if (usuario == null)
+                {
+                    _logger.LogWarning("Usuario con ID {IdUsuario} no encontrado", idUsuario);
+                    return View("Error");
+                }
+
+                var presupuesto = new Presupuestos(id, fechaCreacion, usuario);
                 _repositorioPresupuestos.ModificarPresupuesto(presupuesto);
 
                 _logger.LogInformation("Presupuesto con ID {Id} modificado", id);
@@ -122,7 +146,7 @@ namespace tl2_tp6_2024_Days45.Controllers
             try
             {
                 var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
-                ViewBag.Productos = new ProductoRepository().ListarProductos(); // Lista de productos disponibles
+                ViewBag.Productos = new ProductoRepository().ListarProductos();
                 return View(presupuesto);
             }
             catch (Exception ex)
@@ -159,6 +183,16 @@ namespace tl2_tp6_2024_Days45.Controllers
                 {
                     return NotFound();
                 }
+
+                // Restricción para clientes: solo pueden ver su propio presupuesto
+                var rol = HttpContext.Session.GetString("UserRole");
+                var userId = HttpContext.Session.GetInt32("UserId");
+
+                if (rol == "Cliente" && presupuesto.Usuario.IdUsuario != userId)
+                {
+                    return Forbid(); // Prohibido ver otros presupuestos
+                }
+
                 return View(presupuesto);
             }
             catch (Exception ex)

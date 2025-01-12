@@ -19,7 +19,7 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Destinatario</th>
+                    <th>Usuario</th>
                     <th>Fecha de Creación</th>
                     <th>Acciones</th>
                 </tr>
@@ -29,22 +29,14 @@
                 {
                     <tr>
                         <td>@presupuesto.IdPresupuesto</td>
-                        <td>@presupuesto.NombreDestinatario</td>
+                        <td>@presupuesto.Usuario.Nombre</td>
                         <td>@presupuesto.FechaCreacion.ToShortDateString()</td>
                         <td>
-                            <a asp-controller="Presupuestos" asp-action="VerDetalle" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-info btn-sm">
-                                Ver
-                            </a>
-                            <a asp-controller="Presupuestos" asp-action="Modificar" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-warning btn-sm">
-                                Modificar
-                            </a>
-                            <a asp-controller="Presupuestos" asp-action="AgregarProducto" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-success btn-sm">
-                                Agregar Producto
-                            </a>
+                            <a asp-controller="Presupuestos" asp-action="VerDetalle" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-info btn-sm">Ver</a>
+                            <a asp-controller="Presupuestos" asp-action="Modificar" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-warning btn-sm">Modificar</a>
+                            <a asp-controller="Presupuestos" asp-action="AgregarProducto" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-success btn-sm">Agregar Producto</a>
                             <form asp-controller="Presupuestos" asp-action="Eliminar" asp-route-id="@presupuesto.IdPresupuesto" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que desea eliminar este presupuesto?');">
-                                    Eliminar
-                                </button>
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que desea eliminar este presupuesto?');">Eliminar</button>
                             </form>
                         </td>
                     </tr>
@@ -54,8 +46,6 @@
     }
     else
     {
-        <div class="alert alert-info text-center">
-            No hay presupuestos registrados.
-        </div>
+        <div class="alert alert-info text-center">No hay presupuestos registrados.</div>
     }
 </section>

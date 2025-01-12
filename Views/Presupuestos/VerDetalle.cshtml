@@ -10,7 +10,16 @@
     <div class="card mx-auto mb-4" style="max-width: 800px;">
         <div class="card-body">
             <h5 class="card-title">Presupuesto ID: @Model.IdPresupuesto</h5>
-            <p><strong>Destinatario:</strong> @Model.NombreDestinatario</p>
+            
+            @if (Model.Usuario != null)
+            {
+                <p><strong>Usuario:</strong> @Model.Usuario.Nombre</p>
+            }
+            else
+            {
+                <p><strong>Usuario:</strong> No disponible</p>
+            }
+
             <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
             <p><strong>Cantidad de Productos:</strong> @Model.CantidadProductos()</p>
             <p><strong>Monto Total (sin IVA):</strong> @(Model.MontoPresupuesto().ToString("N2"))</p>
@@ -44,12 +53,14 @@
     }
     else
     {
-        <div class="alert alert-info text-center">
-            No hay productos asociados a este presupuesto.
-        </div>
+        <div class="alert alert-info text-center">No hay productos asociados a este presupuesto.</div>
     }
 
     <div class="text-center mt-4">
-        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista</a>
+        @if (User.IsInRole("Administrador"))
+        {
+            <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista de Presupuestos</a>
+        }
+        <!-- No mostrar el botón si es Cliente -->
     </div>
 </section>
