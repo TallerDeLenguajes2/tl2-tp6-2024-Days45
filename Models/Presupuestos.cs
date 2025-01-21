@@ -7,7 +7,7 @@ namespace EspacioTp5
     {
         public int IdPresupuesto { get; private set; }
         public DateTime FechaCreacion { get; private set; }
-        public Usuarios Usuario { get; private set; }  
+        public Usuarios Usuario { get; private set; }
         public List<PresupuestosDetalle> Detalle { get; private set; }
 
         // Constructor para nuevo presupuesto (sin ID aún)
@@ -46,6 +46,10 @@ namespace EspacioTp5
         public int CantidadProductos()
         {
             return Detalle.Count;
+        }
+        public void ModificarFecha(DateTime nuevaFecha)
+        {
+            this.FechaCreacion = nuevaFecha;
         }
     }
 }

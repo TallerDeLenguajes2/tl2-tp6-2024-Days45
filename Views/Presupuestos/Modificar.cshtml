@@ -1,12 +1,56 @@
-@model EspacioTp5.Presupuestos
+@model ModificarPresupuestoViewModel
+
+@{
+    ViewData["Title"] = "Modificar Presupuesto";
+}
 
 <h1>Modificar Presupuesto</h1>
 
-<form method="post">
+<form asp-action="Modificar" method="post">
+    <input type="hidden" asp-for="IdPresupuesto" />
+
     <div class="form-group">
-        <label for="fechaCreacion">Fecha de Creación</label>
-        <input type="date" class="form-control" id="fechaCreacion" name="fechaCreacion" value="@Model.FechaCreacion.ToString("yyyy-MM-dd")" required />
+        <label asp-for="FechaCreacion" class="control-label">Fecha de Creación</label>
+        <input asp-for="FechaCreacion" class="form-control" type="date" />
+        <span asp-validation-for="FechaCreacion" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-warning">Modificar</button>
+    <h3>Detalles del Presupuesto</h3>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Detalles.Count; i++)
+            {
+                <tr>
+                    <td>
+                        @Model.Detalles[i].NombreProducto
+                        <input type="hidden" asp-for="Detalles[i].IdProducto" />
+                    </td>
+                    <td>@(Model.Detalles[i].Precio.ToString("C"))</td>
+                    <td>
+                        <input asp-for="Detalles[i].Cantidad" class="form-control" type="number" min="0" />
+                        <span asp-validation-for="Detalles[i].Cantidad" class="text-danger"></span>
+                    </td>
+                    <td>
+                        @((Model.Detalles[i].Cantidad * Model.Detalles[i].Precio).ToString("C"))
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}Error.

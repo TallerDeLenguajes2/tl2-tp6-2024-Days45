@@ -8,11 +8,6 @@ namespace rapositoriosTP5
     public class ProductoRepository : IProductoRepository
     {
         private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
-
-        /*CREATE TABLE Productos ( como esta formada la tabla productos en la base de datos
-    idProducto  INTEGER PRIMARY KEY AUTOINCREMENT,
-    Descripcion TEXT    NOT NULL,
-    Precio      INTEGER NOT NULL);*/
         public void CrearProducto(Productos producto)
         {
             using (var connection = new SqliteConnection(cadenaConexion))
@@ -32,8 +27,6 @@ namespace rapositoriosTP5
                 }
             }
         }
-
-
         public void ModificarProducto(int id, Productos producto)
         {
             var query =
@@ -51,7 +44,6 @@ namespace rapositoriosTP5
                 connection.Close();
             }
         }
-
         public List<Productos> ListarProductos()
         {
             var productos = new List<Productos>();

@@ -2,7 +2,7 @@ using EspacioTp5;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using rapositoriosTP5;
-
+using tl2_tp6_2024_Days45.ViewModel;
 namespace tl2_tp6_2024_Days45.Controllers
 {
     public class PresupuestosController : Controller
@@ -56,54 +56,85 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
-
-
-
         [HttpGet]
         public IActionResult Modificar(int id)
         {
             try
             {
+                // Obtener el presupuesto existente
                 var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+
                 if (presupuesto == null)
                 {
-                    return NotFound(); // Si no se encuentra el presupuesto, devolvemos un 404
+                    _logger.LogWarning("No se encontró el presupuesto con ID {Id}", id);
+                    return NotFound();
                 }
-                return View(presupuesto);
+
+                // Crear el ViewModel para la modificación
+                var viewModel = new ModificarPresupuestoViewModel
+                {
+                    IdPresupuesto = presupuesto.IdPresupuesto,
+                    FechaCreacion = presupuesto.FechaCreacion,
+                    Detalles = (presupuesto.Detalle ?? new List<PresupuestosDetalle>())
+                        .Where(d => d.Producto != null)
+                        .Select(d => new DetalleModificacionViewModel
+                        {
+                            IdProducto = d.Producto?.IdProducto ?? 0,
+                            NombreProducto = d.Producto?.Descripcion ?? string.Empty,
+                            Cantidad = d.Cantidad,
+                            Precio = (int)d.Producto?.Precio // Cambiado a int
+                        }).ToList()
+                };
+
+                return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el presupuesto con ID {Id}", id);
+                _logger.LogError(ex, "Error al cargar el presupuesto para modificar");
                 return View("Error");
             }
         }
 
         [HttpPost]
-        public IActionResult Modificar(int id, DateTime fechaCreacion, int idUsuario)
+        public IActionResult Modificar(ModificarPresupuestoViewModel viewModel)
         {
+            if (!ModelState.IsValid)
+            {
+                // Registra los errores de validación
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+                foreach (var error in errors)
+                {
+                    _logger.LogWarning("Error de validación: {ErrorMessage}", error.ErrorMessage);
+                }
+                return View(viewModel);
+            }
+
             try
             {
-                // Obtener el usuario por su id
-                var usuario = _repositorioPresupuestos.ObtenerUsuario(idUsuario);
-                if (usuario == null)
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(viewModel.IdPresupuesto);
+
+                if (presupuesto == null)
                 {
-                    _logger.LogWarning("Usuario con ID {IdUsuario} no encontrado", idUsuario);
-                    return View("Error");
+                    _logger.LogWarning("No se encontró el presupuesto con ID {Id}", viewModel.IdPresupuesto);
+                    return NotFound();
                 }
 
-                var presupuesto = new Presupuestos(id, fechaCreacion, usuario);
-                _repositorioPresupuestos.ModificarPresupuesto(presupuesto);
+                // Actualizar la fecha y los detalles en el repositorio
+                presupuesto.ModificarFecha(viewModel.FechaCreacion); // Actualiza la fecha en el objeto
+                _repositorioPresupuestos.ModificarPresupuesto(presupuesto, viewModel.Detalles); // Llama al repositorio para actualizar
 
-                _logger.LogInformation("Presupuesto con ID {Id} modificado", id);
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al modificar el presupuesto con ID {Id}", id);
-                return View("Error");
+                _logger.LogError(ex, "Error al modificar el presupuesto: {Message}", ex.Message);
+                var errorViewModel = new ErrorViewModel
+                {
+                    RequestId = HttpContext.TraceIdentifier
+                };
+                return View("Error", errorViewModel);
             }
         }
-
         [HttpGet]
         public IActionResult Eliminar(int id)
         {
@@ -201,5 +232,6 @@ namespace tl2_tp6_2024_Days45.Controllers
                 return View("Error");
             }
         }
+        
     }
 }

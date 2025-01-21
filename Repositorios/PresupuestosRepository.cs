@@ -7,7 +7,7 @@ namespace rapositoriosTP5
 {
     public class PresupuestoRepository : IPresupuestoRepository
     {
-        private string cadenaConexion = "Data Source=db/Tienda.db;Cache=Shared";
+        private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
 
         public void CrearPresupuesto(Presupuestos presupuesto)
         {
@@ -160,21 +160,53 @@ namespace rapositoriosTP5
             return usuario;
         }
 
-        public void ModificarPresupuesto(Presupuestos presupuesto)
+        public void ModificarPresupuesto(Presupuestos presupuesto, List<DetalleModificacionViewModel> detalles)
         {
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                string querystring = "UPDATE Presupuestos SET FechaCreacion = @FechaCreacion, idUsuario = @idUsuario WHERE idPresupuesto = @idPresupuesto";
 
-                using (var command = new SqliteCommand(querystring, connection))
+                // Actualizar la fecha de creación y usuario del presupuesto
+                string queryPresupuesto = "UPDATE Presupuestos SET FechaCreacion = @FechaCreacion, idUsuario = @idUsuario WHERE idPresupuesto = @idPresupuesto";
+                using (var command = new SqliteCommand(queryPresupuesto, connection))
                 {
                     command.Parameters.AddWithValue("@FechaCreacion", presupuesto.FechaCreacion.ToString("yyyy-MM-dd"));
-                    command.Parameters.AddWithValue("@idUsuario", presupuesto.Usuario.IdUsuario); // Pasamos idUsuario
+                    command.Parameters.AddWithValue("@idUsuario", presupuesto.Usuario.IdUsuario);
                     command.Parameters.AddWithValue("@idPresupuesto", presupuesto.IdPresupuesto);
                     command.ExecuteNonQuery();
                 }
+
+                // Actualizar los detalles del presupuesto (productos y cantidades)
+                foreach (var detalleVM in detalles)
+                {
+                    string queryDetalle = @"
+            INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad)
+            VALUES (@idPresupuesto, @idProducto, @Cantidad)
+            ON CONFLICT (idPresupuesto, idProducto) DO UPDATE
+            SET Cantidad = @Cantidad";
+
+                    using (var command = new SqliteCommand(queryDetalle, connection))
+                    {
+                        command.Parameters.AddWithValue("@idPresupuesto", presupuesto.IdPresupuesto);
+                        command.Parameters.AddWithValue("@idProducto", detalleVM.IdProducto);
+                        command.Parameters.AddWithValue("@Cantidad", detalleVM.Cantidad);
+                        command.ExecuteNonQuery();
+                    }
+
+                    // Si la cantidad es cero, eliminar el producto
+                    if (detalleVM.Cantidad <= 0)
+                    {
+                        string queryEliminar = "DELETE FROM PresupuestosDetalle WHERE idPresupuesto = @idPresupuesto AND idProducto = @idProducto";
+                        using (var command = new SqliteCommand(queryEliminar, connection))
+                        {
+                            command.Parameters.AddWithValue("@idPresupuesto", presupuesto.IdPresupuesto);
+                            command.Parameters.AddWithValue("@idProducto", detalleVM.IdProducto);
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                }
             }
         }
+
     }
 }
