@@ -14,28 +14,53 @@ namespace rapositoriosTP5
             using (SqliteConnection connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                string queryString = "INSERT INTO Presupuestos (FechaCreacion, idUsuario) VALUES (@Fecha, @idUsuario);";
-                var command = new SqliteCommand(queryString, connection);
-                command.Parameters.AddWithValue("@Fecha", presupuesto.FechaCreacion.ToString("yyyy-MM-dd"));
-                command.Parameters.AddWithValue("@idUsuario", presupuesto.Usuario.IdUsuario); // Pasamos el idUsuario
-                command.ExecuteNonQuery();
-                connection.Close();
+
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Crear presupuesto y obtener el ID generado
+                        string queryPresupuesto = "INSERT INTO Presupuestos (FechaCreacion, idUsuario) VALUES (@Fecha, @idUsuario); SELECT last_insert_rowid();";
+                        var command = new SqliteCommand(queryPresupuesto, connection, transaction);
+                        command.Parameters.AddWithValue("@Fecha", presupuesto.FechaCreacion.ToString("yyyy-MM-dd"));
+                        command.Parameters.AddWithValue("@idUsuario", presupuesto.Usuario.IdUsuario);
+
+                        long idPresupuesto = (long)command.ExecuteScalar();
+
+                        // Insertar detalles del presupuesto
+                        foreach (var detalle in presupuesto.Detalle)
+                        {
+                            string queryDetalle = "INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) VALUES (@idPresupuesto, @idProducto, @Cantidad);";
+                            var commandDetalle = new SqliteCommand(queryDetalle, connection, transaction);
+                            commandDetalle.Parameters.AddWithValue("@idPresupuesto", idPresupuesto);
+                            commandDetalle.Parameters.AddWithValue("@idProducto", detalle.Producto.IdProducto);
+                            commandDetalle.Parameters.AddWithValue("@Cantidad", detalle.Cantidad);
+                            commandDetalle.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
         }
 
         public void AgregarProductoAPresupuesto(int presupuestoId, Productos producto, int cantidad)
         {
-            using (var connection = new SqliteConnection(cadenaConexion))
+            using (SqliteConnection connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                string query = "INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) VALUES (@idPresupuesto, @idProducto, @Cantidad)";
-                using (var command = new SqliteCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@idPresupuesto", presupuestoId);
-                    command.Parameters.AddWithValue("@idProducto", producto.IdProducto);
-                    command.Parameters.AddWithValue("@Cantidad", cantidad);
-                    command.ExecuteNonQuery();
-                }
+                string queryString = "INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) " +
+                                     "VALUES (@idPresupuesto, @idProducto, @Cantidad);";
+                var command = new SqliteCommand(queryString, connection);
+                command.Parameters.AddWithValue("@idPresupuesto", presupuestoId);
+                command.Parameters.AddWithValue("@idProducto", producto.IdProducto);
+                command.Parameters.AddWithValue("@Cantidad", cantidad);
+                command.ExecuteNonQuery();
             }
         }
 
@@ -44,8 +69,18 @@ namespace rapositoriosTP5
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
-                string query = "DELETE FROM Presupuestos WHERE idPresupuesto = @id";
-                using (var command = new SqliteCommand(query, connection))
+
+                // Primero, eliminar los detalles asociados
+                string deleteDetailsQuery = "DELETE FROM PresupuestosDetalle WHERE idPresupuesto = @id";
+                using (var command = new SqliteCommand(deleteDetailsQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@id", id);
+                    command.ExecuteNonQuery();
+                }
+
+                // Luego, eliminar el presupuesto
+                string deletePresupuestoQuery = "DELETE FROM Presupuestos WHERE idPresupuesto = @id";
+                using (var command = new SqliteCommand(deletePresupuestoQuery, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);
                     command.ExecuteNonQuery();
@@ -64,11 +99,11 @@ namespace rapositoriosTP5
             {
                 connection.Open();
                 string query = @"SELECT p.idPresupuesto, p.FechaCreacion, p.idUsuario, u.Nombre, u.Rol, 
-                                 pd.idProducto, pd.Cantidad 
-                                 FROM Presupuestos p
-                                 INNER JOIN Usuarios u ON p.idUsuario = u.id_usuario
-                                 INNER JOIN PresupuestosDetalle pd ON p.idPresupuesto = pd.idPresupuesto
-                                 WHERE p.idPresupuesto = @id";
+                         pd.idProducto, pd.Cantidad 
+                         FROM Presupuestos p
+                         INNER JOIN Usuarios u ON p.idUsuario = u.id_usuario
+                         LEFT JOIN PresupuestosDetalle pd ON p.idPresupuesto = pd.idPresupuesto
+                         WHERE p.idPresupuesto = @id";
 
                 using (var command = new SqliteCommand(query, connection))
                 {
@@ -82,22 +117,23 @@ namespace rapositoriosTP5
                                 fechaCreacion = reader.GetDateTime(1);
                                 int idUsuario = reader.GetInt32(2);
                                 string nombreUsuario = reader.GetString(3);
-                                string usuarioNombre = reader.GetString(2); // Lo asumo como la columna de usuario
-                                string rolUsuario = reader.GetString(4);
-
-                                // Usamos el constructor adecuado de Usuarios con idUsuario, nombre, usuarioNombre, contraseña (vacía), rolUsuario
+                                string usuarioNombre = reader.GetString(4);
+                                string rolUsuario = reader.GetString(5);
                                 usuario = new Usuarios(idUsuario, nombreUsuario, usuarioNombre, "", rolUsuario);
                             }
 
-                            var producto = productoRepository.ObtenerProducto(reader.GetInt32(5));
-                            int cantidad = reader.GetInt32(6);
-                            detalles.Add(new PresupuestosDetalle(producto, cantidad));
+                            if (!reader.IsDBNull(5)) // Verificar si hay un producto
+                            {
+                                var producto = productoRepository.ObtenerProducto(reader.GetInt32(5));
+                                int cantidad = reader.GetInt32(6);
+                                detalles.Add(new PresupuestosDetalle(producto, cantidad));
+                            }
                         }
                     }
                 }
             }
 
-            return new Presupuestos(id, fechaCreacion, usuario, detalles); // Pasamos el objeto Usuario al constructor
+            return new Presupuestos(id, fechaCreacion, usuario, detalles);
         }
 
         public List<Presupuestos> ListarPresupuestos()

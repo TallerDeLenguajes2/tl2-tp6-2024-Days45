@@ -1,12 +1,63 @@
-@model EspacioTp5.Presupuestos
+@model tl2_tp6_2024_Days45.ViewModel.CrearPresupuestoViewModel
+
+@{
+    ViewData["Title"] = "Crear Presupuesto";
+}
 
 <h1>Crear Nuevo Presupuesto</h1>
 
-<form method="post">
+<form asp-action="Crear" method="post">
     <div class="form-group">
-        <label for="fechaCreacion">Fecha de Creación</label>
-        <input type="date" class="form-control" id="fechaCreacion" name="fechaCreacion" required />
+        <label asp-for="FechaCreacion"></label>
+        <input asp-for="FechaCreacion" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        <span asp-validation-for="FechaCreacion" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-success">Crear</button>
+    <div class="form-group">
+        <label asp-for="IdUsuario"></label>
+        <select asp-for="IdUsuario" class="form-control">
+            <option value="" disabled selected>Seleccione un usuario</option>
+            @foreach (var usuario in Model.Usuarios)
+            {
+                <option value="@usuario.IdUsuario">@usuario.Nombre</option>
+            }
+        </select>
+        <span asp-validation-for="IdUsuario" class="text-danger"></span>
+    </div>
+
+    <h3>Seleccionar Productos</h3>
+    @for (int i = 0; i < Model.Productos.Count; i++)
+    {
+        <div class="form-group">
+            <label>@Model.Productos[i].Descripcion</label>
+            <input type="number" name="ProductosSeleccionados[@i].Cantidad" class="form-control" min="0"
+                placeholder="Cantidad" />
+            <input type="hidden" name="ProductosSeleccionados[@i].IdProducto" value="@Model.Productos[i].IdProducto" />
+        </div>
+    }
+
+    <div class="text-danger" id="productError" style="display:none;">Debe seleccionar al menos un producto con cantidad
+        válida.</div>
+
+    <button type="submit" class="btn btn-success">Crear Presupuesto</button>
 </form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.querySelector("form").addEventListener("submit", function (e) {
+            const inputs = document.querySelectorAll('input[name^="ProductosSeleccionados"]');
+            const isValid = Array.from(inputs).some(input => input.type === "number" && parseInt(input.value) > 0);
+
+            if (!isValid) {
+                e.preventDefault();
+                document.getElementById("productError").style.display = "block";
+            } else {
+                document.getElementById("productError").style.display = "none";
+            }
+        });
+    </script>
+}
+

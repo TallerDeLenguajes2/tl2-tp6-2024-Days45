@@ -14,7 +14,7 @@
         <div class="card-body">
             <h5 class="card-title">Detalles del Presupuesto</h5>
             <p><strong>ID:</strong> @Model.IdPresupuesto</p>
-            <p><strong>Usuario:</strong> @Model.Usuario.Nombre</p>
+            <p><strong>Usuario:</strong> @Model.Usuario?.Nombre ?? "No disponible"</p> <!-- Manejo de null -->
             <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
         </div>
     </div>

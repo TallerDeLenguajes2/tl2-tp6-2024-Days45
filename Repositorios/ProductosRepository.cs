@@ -74,29 +74,29 @@ namespace rapositoriosTP5
         public Productos ObtenerProducto(int id)
         {
             Productos producto = null;
-            var query = "SELECT * FROM productos WHERE idProducto = @idProducto";
+            var query = "SELECT idProducto, Descripcion, Precio FROM Productos WHERE idProducto = @id";
             using (var connection = new SqliteConnection(cadenaConexion))
             {
                 connection.Open();
                 using (var command = new SqliteCommand(query, connection))
                 {
-                    command.Parameters.AddWithValue("@idProducto", id);
+                    command.Parameters.AddWithValue("@id", id);
                     using (var reader = command.ExecuteReader())
                     {
                         if (reader.Read())
                         {
                             producto = new Productos(
                                 Convert.ToInt32(reader["idProducto"]),
-                                reader["descripcion"].ToString(),
-                                Convert.ToInt32(reader["precio"])
+                                reader["Descripcion"].ToString(),
+                                Convert.ToInt32(reader["Precio"])
                             );
                         }
                     }
                 }
-                connection.Close();
             }
             return producto;
         }
+
 
         public void EliminarProducto(int id)
         {
@@ -121,7 +121,7 @@ namespace rapositoriosTP5
                             sqlCmd.ExecuteNonQuery();
                         }
 
-                        transaction.Commit(); 
+                        transaction.Commit();
                     }
                     catch (Exception ex)
                     {

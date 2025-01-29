@@ -5,6 +5,8 @@ namespace rapositoriosTP5
 {
     public interface IUsuariosRepository
     {
-        Usuarios ObtenerUsuario(string usuario, string contraseña);
+        public Usuarios ObtenerUsuario(string usuario, string contraseña);
+        public Usuarios ObtenerUsuarioPorId(int id);
+        public List<Usuarios> ListarUsuarios();
     }
 }

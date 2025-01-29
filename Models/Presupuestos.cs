@@ -45,7 +45,7 @@ namespace EspacioTp5
 
         public int CantidadProductos()
         {
-            return Detalle.Count;
+            return Detalle.Sum(d => d.Cantidad); // Sumar todas las cantidades de productos
         }
         public void ModificarFecha(DateTime nuevaFecha)
         {

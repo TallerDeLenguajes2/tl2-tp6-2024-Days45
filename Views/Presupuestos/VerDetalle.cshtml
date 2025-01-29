@@ -57,10 +57,6 @@
     }
 
     <div class="text-center mt-4">
-        @if (User.IsInRole("Administrador"))
-        {
-            <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista de Presupuestos</a>
-        }
-        <!-- No mostrar el botón si es Cliente -->
+        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista de Presupuestos</a>
     </div>
 </section>
