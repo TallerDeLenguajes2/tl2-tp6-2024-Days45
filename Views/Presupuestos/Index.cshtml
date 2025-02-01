@@ -19,7 +19,7 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Usuario</th>
+                    <th>Cliente</th>
                     <th>Fecha de Creación</th>
                     <th>Acciones</th>
                 </tr>
@@ -29,7 +29,7 @@
                 {
                     <tr>
                         <td>@presupuesto.IdPresupuesto</td>
-                        <td>@presupuesto.Usuario.Nombre</td>
+                        <td>@presupuesto.Cliente.Nombre</td> <!-- Cambiado de Usuario a Cliente -->
                         <td>@presupuesto.FechaCreacion.ToShortDateString()</td>
                         <td>
                             <a asp-controller="Presupuestos" asp-action="VerDetalle" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-info btn-sm">Ver</a>

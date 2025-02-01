@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EspacioTp5
 {
@@ -7,23 +8,23 @@ namespace EspacioTp5
     {
         public int IdPresupuesto { get; private set; }
         public DateTime FechaCreacion { get; private set; }
-        public Usuarios Usuario { get; private set; }
+        public Clientes Cliente { get; private set; } 
         public List<PresupuestosDetalle> Detalle { get; private set; }
 
         // Constructor para nuevo presupuesto (sin ID aún)
-        public Presupuestos(DateTime fechaCreacion, Usuarios usuario, List<PresupuestosDetalle> detalle = null)
+        public Presupuestos(DateTime fechaCreacion, Clientes cliente, List<PresupuestosDetalle> detalle = null)
         {
             FechaCreacion = fechaCreacion;
-            Usuario = usuario;
+            Cliente = cliente;
             Detalle = detalle ?? new List<PresupuestosDetalle>();
         }
 
         // Constructor con ID (para modificar o cargar desde base de datos)
-        public Presupuestos(int idPresupuesto, DateTime fechaCreacion, Usuarios usuario, List<PresupuestosDetalle> detalle = null)
+        public Presupuestos(int idPresupuesto, DateTime fechaCreacion, Clientes cliente, List<PresupuestosDetalle> detalle = null)
         {
             IdPresupuesto = idPresupuesto;
             FechaCreacion = fechaCreacion;
-            Usuario = usuario;
+            Cliente = cliente;
             Detalle = detalle ?? new List<PresupuestosDetalle>();
         }
 
@@ -45,8 +46,9 @@ namespace EspacioTp5
 
         public int CantidadProductos()
         {
-            return Detalle.Sum(d => d.Cantidad); // Sumar todas las cantidades de productos
+            return Detalle.Sum(d => d.Cantidad); 
         }
+
         public void ModificarFecha(DateTime nuevaFecha)
         {
             this.FechaCreacion = nuevaFecha;

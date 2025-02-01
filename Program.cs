@@ -7,9 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Habilitar servicios de sesiones
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); 
-    options.Cookie.HttpOnly = true; 
-    options.Cookie.IsEssential = true; 
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 // Acceso al contexto HTTP
@@ -19,6 +19,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IProductoRepository, ProductoRepository>();
 builder.Services.AddSingleton<IPresupuestoRepository, PresupuestoRepository>();
 builder.Services.AddScoped<IUsuariosRepository, RepositorioUsuariosSqlite>();
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 
 // Agregar servicios de controladores y vistas
 builder.Services.AddControllersWithViews();

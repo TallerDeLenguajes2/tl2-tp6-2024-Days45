@@ -14,15 +14,15 @@
     </div>
 
     <div class="form-group">
-        <label asp-for="IdUsuario"></label>
-        <select asp-for="IdUsuario" class="form-control">
-            <option value="" disabled selected>Seleccione un usuario</option>
-            @foreach (var usuario in Model.Usuarios)
+        <label asp-for="IdCliente"></label>
+        <select asp-for="IdCliente" class="form-control">
+            <option value="" disabled selected>Seleccione un cliente</option>
+            @foreach (var cliente in Model.Clientes)
             {
-                <option value="@usuario.IdUsuario">@usuario.Nombre</option>
+                <option value="@cliente.IdCliente">@cliente.Nombre</option>
             }
         </select>
-        <span asp-validation-for="IdUsuario" class="text-danger"></span>
+        <span asp-validation-for="IdCliente" class="text-danger"></span>
     </div>
 
     <h3>Seleccionar Productos</h3>
@@ -60,4 +60,3 @@
         });
     </script>
 }
-

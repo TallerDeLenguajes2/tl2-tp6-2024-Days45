@@ -10,16 +10,7 @@
     <div class="card mx-auto mb-4" style="max-width: 800px;">
         <div class="card-body">
             <h5 class="card-title">Presupuesto ID: @Model.IdPresupuesto</h5>
-            
-            @if (Model.Usuario != null)
-            {
-                <p><strong>Usuario:</strong> @Model.Usuario.Nombre</p>
-            }
-            else
-            {
-                <p><strong>Usuario:</strong> No disponible</p>
-            }
-
+            <p><strong>Cliente:</strong> @Model.Cliente.Nombre</p> <!-- Cambiado de Usuario a Cliente -->
             <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
             <p><strong>Cantidad de Productos:</strong> @Model.CantidadProductos()</p>
             <p><strong>Monto Total (sin IVA):</strong> @(Model.MontoPresupuesto().ToString("N2"))</p>
@@ -57,6 +48,7 @@
     }
 
     <div class="text-center mt-4">
-        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista de Presupuestos</a>
+        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista de
+            Presupuestos</a>
     </div>
 </section>
