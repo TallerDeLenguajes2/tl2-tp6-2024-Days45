@@ -1,10 +1,16 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using EspacioTp5;
 using rapositoriosTP5;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Habilitar servicios de sesiones
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -12,24 +18,47 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Acceso al contexto HTTP
+
 builder.Services.AddHttpContextAccessor();
 
-// Registrar repositorios personalizados
-builder.Services.AddSingleton<IProductoRepository, ProductoRepository>();
-builder.Services.AddSingleton<IPresupuestoRepository, PresupuestoRepository>();
-builder.Services.AddSingleton<IUsuariosRepository, RepositorioUsuariosSqlite>();
-builder.Services.AddSingleton<IClienteRepository, ClienteRepository>();
+var CadenaDeConexion = builder.Configuration.GetConnectionString("SqliteConexion")!;
+builder.Services.AddSingleton<string>(CadenaDeConexion);
+builder.Services.AddLogging();
+builder.Services.AddSingleton<IProductoRepository, ProductoRepository>(provider =>
+    new ProductoRepository(
+        CadenaDeConexion,
+        provider.GetRequiredService<ILogger<ProductoRepository>>()
+    ));
 
-// Agregar servicios de controladores y vistas
+builder.Services.AddSingleton<IPresupuestoRepository, PresupuestoRepository>(provider =>
+    new PresupuestoRepository(
+        CadenaDeConexion,
+        provider.GetRequiredService<ILogger<PresupuestoRepository>>(),
+        provider.GetRequiredService<IProductoRepository>(),
+        provider.GetRequiredService<IClienteRepository>()
+    ));
+
+builder.Services.AddSingleton<IUsuariosRepository, RepositorioUsuariosSqlite>(provider =>
+    new RepositorioUsuariosSqlite(
+        CadenaDeConexion,
+        provider.GetRequiredService<ILogger<RepositorioUsuariosSqlite>>()
+    ));
+
+builder.Services.AddSingleton<IClienteRepository, ClienteRepository>(provider =>
+    new ClienteRepository(
+        CadenaDeConexion,
+        provider.GetRequiredService<ILogger<ClienteRepository>>()
+    ));
+
+
 builder.Services.AddControllersWithViews();
+
 
 var app = builder.Build();
 
-// Usar sesiones
 app.UseSession();
 
-// Configuración del pipeline HTTP
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -38,15 +67,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthorization();
 
-// Configuración de rutas
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Login}/{action=Index}/{id?}");
 
-// Ejecutar la aplicación
+
 app.Run();

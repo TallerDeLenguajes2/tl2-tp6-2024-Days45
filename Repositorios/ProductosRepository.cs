@@ -2,12 +2,20 @@ using System;
 using System.Collections.Generic;
 using EspacioTp5;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace rapositoriosTP5
 {
     public class ProductoRepository : IProductoRepository
     {
-        private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+        private readonly string cadenaConexion;
+        private readonly ILogger<ProductoRepository> logger;
+
+        public ProductoRepository(string cadenaConexion, ILogger<ProductoRepository> logger)
+        {
+            this.cadenaConexion = cadenaConexion;
+            this.logger = logger;
+        }
 
         public void CrearProducto(Productos producto)
         {
@@ -27,6 +35,7 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error al crear el producto");
                 throw new Exception("Error al crear el producto", ex);
             }
         }
@@ -54,6 +63,7 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error al modificar el producto");
                 throw new Exception("Error al modificar el producto", ex);
             }
         }
@@ -84,6 +94,7 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error al listar los productos");
                 throw new Exception("Error al listar los productos", ex);
             }
             return productos;
@@ -117,6 +128,7 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error al obtener el producto");
                 throw new Exception("Error al obtener el producto", ex);
             }
         }
@@ -152,6 +164,7 @@ namespace rapositoriosTP5
                     catch (Exception ex)
                     {
                         transaction.Rollback();
+                        logger.LogError(ex, "Error al eliminar el producto");
                         throw new Exception("Error al eliminar producto", ex);
                     }
                 }

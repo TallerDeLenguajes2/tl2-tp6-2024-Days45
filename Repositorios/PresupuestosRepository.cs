@@ -9,12 +9,23 @@ namespace rapositoriosTP5
 {
     public class PresupuestoRepository : IPresupuestoRepository
     {
-        private readonly string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+        private readonly string cadenaConexion;
         private readonly ILogger<PresupuestoRepository> logger;
-        public PresupuestoRepository(ILogger<PresupuestoRepository> logger)
+        private readonly IProductoRepository productoRepository;
+        private readonly IClienteRepository clienteRepository;
+
+        public PresupuestoRepository(
+            string cadenaConexion,
+            ILogger<PresupuestoRepository> logger,
+            IProductoRepository productoRepository,
+            IClienteRepository clienteRepository)
         {
+            this.cadenaConexion = cadenaConexion;
             this.logger = logger;
+            this.productoRepository = productoRepository;
+            this.clienteRepository = clienteRepository;
         }
+
         public void CrearPresupuesto(Presupuestos presupuesto)
         {
             using (SqliteConnection connection = new SqliteConnection(cadenaConexion))
@@ -110,7 +121,6 @@ namespace rapositoriosTP5
         }
         public Presupuestos ObtenerPresupuesto(int id)
         {
-            ProductoRepository productoRepository = new ProductoRepository();
             Clientes cliente = null;
             DateTime fechaCreacion = DateTime.MinValue;
             List<PresupuestosDetalle> detalles = new List<PresupuestosDetalle>();
@@ -166,7 +176,6 @@ namespace rapositoriosTP5
         public List<Presupuestos> ListarPresupuestos()
         {
             List<Presupuestos> listaPresupuestos = new List<Presupuestos>();
-            ClienteRepository clienteRepo = new ClienteRepository();
             try
             {
                 using (var connection = new SqliteConnection(cadenaConexion))
@@ -183,7 +192,7 @@ namespace rapositoriosTP5
                                 DateTime fechaCreacion = reader.GetDateTime(1);
                                 int idCliente = reader.GetInt32(2);
 
-                                Clientes cliente = clienteRepo.ObtenerCliente(idCliente);
+                                Clientes cliente = clienteRepository.ObtenerCliente(idCliente);
                                 listaPresupuestos.Add(new Presupuestos(idPresupuesto, fechaCreacion, cliente));
                             }
                         }

@@ -1,12 +1,20 @@
 using EspacioTp5;
 using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace rapositoriosTP5
 {
     public class ClienteRepository : IClienteRepository
     {
-        private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+        private readonly string cadenaConexion;
+        private readonly ILogger<ClienteRepository> _logger;
+
+        public ClienteRepository(string cadenaConexion, ILogger<ClienteRepository> _logger)
+        {
+            this.cadenaConexion = cadenaConexion;
+            this._logger = _logger;
+        }
 
         public void CrearCliente(Clientes cliente)
         {
@@ -21,21 +29,21 @@ namespace rapositoriosTP5
                         command.Parameters.AddWithValue("@Nombre", cliente.Nombre);
                         command.Parameters.AddWithValue("@Email", cliente.Email);
                         command.Parameters.AddWithValue("@Telefono", cliente.Telefono);
-                        
+
                         int filasAfectadas = command.ExecuteNonQuery();
                         if (filasAfectadas == 0)
                         {
-                            throw new Exception("No se pudo insertar el cliente en la base de datos.");
+                            throw new InvalidOperationException("No se pudo insertar el cliente en la base de datos.");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al crear el cliente", ex);
+                _logger.LogError(ex, "Error al crear el cliente {Cliente}", cliente.Nombre);
+                throw new ApplicationException("Ocurrió un error al crear el cliente.", ex);
             }
         }
-
         public void ModificarCliente(int id, Clientes cliente)
         {
             try
@@ -50,21 +58,21 @@ namespace rapositoriosTP5
                         command.Parameters.AddWithValue("@Email", cliente.Email);
                         command.Parameters.AddWithValue("@Telefono", cliente.Telefono);
                         command.Parameters.AddWithValue("@id", id);
-                        
+
                         int filasAfectadas = command.ExecuteNonQuery();
                         if (filasAfectadas == 0)
                         {
-                            throw new Exception($"No se encontró un cliente con Id {id} para modificar.");
+                            throw new KeyNotFoundException($"No se encontró un cliente con Id {id} para modificar.");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al modificar el cliente", ex);
+                _logger.LogError(ex, "Error al modificar el cliente con Id {Id}", id);
+                throw new ApplicationException("Ocurrió un error al modificar el cliente.", ex);
             }
         }
-
         public List<Clientes> ListarClientes()
         {
             List<Clientes> lista = new List<Clientes>();
@@ -86,17 +94,17 @@ namespace rapositoriosTP5
 
                 if (lista.Count == 0)
                 {
-                    throw new Exception("No se encontraron clientes en la base de datos.");
+                    throw new InvalidOperationException("No se encontraron clientes en la base de datos.");
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al listar los clientes", ex);
+                _logger.LogError(ex, "Error al listar los clientes");
+                throw new ApplicationException("Ocurrió un error al listar los clientes.", ex);
             }
 
             return lista;
         }
-
         public Clientes ObtenerCliente(int id)
         {
             try
@@ -117,15 +125,15 @@ namespace rapositoriosTP5
                         }
                     }
                 }
-                
-                throw new Exception($"No se encontró un cliente con Id {id}.");
+
+                throw new KeyNotFoundException($"No se encontró un cliente con Id {id}.");
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener el cliente", ex);
+                _logger.LogError(ex, "Error al obtener el cliente con Id {Id}", id);
+                throw new ApplicationException("Ocurrió un error al obtener el cliente.", ex);
             }
         }
-
         public void EliminarCliente(int id)
         {
             try
@@ -140,14 +148,15 @@ namespace rapositoriosTP5
                         int filasAfectadas = command.ExecuteNonQuery();
                         if (filasAfectadas == 0)
                         {
-                            throw new Exception($"No se encontró un cliente con Id {id} para eliminar.");
+                            throw new KeyNotFoundException($"No se encontró un cliente con Id {id} para eliminar.");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al eliminar el cliente", ex);
+                _logger.LogError(ex, "Error al eliminar el cliente con Id {Id}", id);
+                throw new ApplicationException("Ocurrió un error al eliminar el cliente.", ex);
             }
         }
     }

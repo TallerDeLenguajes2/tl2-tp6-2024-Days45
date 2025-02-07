@@ -9,12 +9,12 @@ namespace rapositoriosTP5
 {
     public class RepositorioUsuariosSqlite : IUsuariosRepository
     {
-        private string cadenaConexion;
+        private readonly string cadenaConexion;
         private readonly ILogger<RepositorioUsuariosSqlite> _logger;
 
-        public RepositorioUsuariosSqlite(IConfiguration configuracion, ILogger<RepositorioUsuariosSqlite> logger)
+        public RepositorioUsuariosSqlite(string cadenaConexion, ILogger<RepositorioUsuariosSqlite> logger)
         {
-            cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+            this.cadenaConexion = cadenaConexion;
             _logger = logger;
         }
 
