@@ -9,56 +9,60 @@ namespace tl2_tp6_2024_Days45.Controllers
     public class LoginController : Controller
     {
         private readonly IUsuariosRepository _usuariosRepository;
+        private readonly IClienteRepository _repositorioCliente;
         private readonly ILogger<LoginController> _logger;
 
-        public LoginController(IUsuariosRepository usuariosRepository, ILogger<LoginController> logger)
+
+        public LoginController(IUsuariosRepository usuariosRepository, ILogger<LoginController> logger, IClienteRepository repositorioCliente)
         {
             _usuariosRepository = usuariosRepository;
             _logger = logger;
+            _repositorioCliente = repositorioCliente;
         }
-
+        [HttpGet]
         public IActionResult Index()
         {
-            var model = new LoginViewModel
+            var isAuthenticated = HttpContext.Session.GetString("IsAuthenticated");
+            var rol = HttpContext.Session.GetString("UserRole");
+
+            if (isAuthenticated == "true" && !string.IsNullOrEmpty(rol))
             {
-                IsAuthenticated = HttpContext.Session.GetString("IsAuthenticated") == "true"
-            };
-            return View(model);
+                return RedirectToAction("Index", "Presupuestos");
+            }
+
+            return View(new LoginViewModel { IsAuthenticated = false });
         }
 
         [HttpPost]
         public IActionResult Login(LoginViewModel model)
         {
-            if (string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.Password))
+            _logger.LogInformation($"Intento de login con usuario: {model.Username}");
+
+            if (string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password))
             {
-                model.ErrorMessage = "Por favor ingrese su nombre de usuario y contraseña.";
-                return View("Index", model);
+                ViewData["Error"] = "Debe ingresar un usuario y una contraseña.";
+                return View("Index", new LoginViewModel { IsAuthenticated = false });
             }
 
-            var usuario = _usuariosRepository.ObtenerUsuario(model.Username, model.Password);
+            var user = _usuariosRepository.ObtenerUsuario(model.Username, model.Password);
 
-            if (usuario != null)
+            if (user != null)
             {
+                _logger.LogInformation($"Usuario autenticado: {user.Usuario} con rol {user.Rol}");
+
                 HttpContext.Session.SetString("IsAuthenticated", "true");
-                HttpContext.Session.SetString("UserRole", usuario.Rol);
-                HttpContext.Session.SetString("UserName", usuario.Nombre);
-                HttpContext.Session.SetInt32("UserId", usuario.IdUsuario);
+                HttpContext.Session.SetString("UserRole", user.Rol);
+                HttpContext.Session.SetInt32("UserId", user.IdUsuario);
 
-                if (usuario.Rol == "Administrador")
-                {
-                    return RedirectToAction("Index", "Presupuestos");
-                }
-                else if (usuario.Rol == "Cliente")
-                {
-                    // Redirige al cliente a la vista de detalle de su presupuesto
-                    return RedirectToAction("VerDetalle", "Presupuestos", new { id = usuario.IdUsuario });
-                }
+                return RedirectToAction("Index", "Presupuestos");
             }
 
-            model.ErrorMessage = "Credenciales inválidas.";
-            model.IsAuthenticated = false;
-            return View("Index", model);
+            _logger.LogWarning("Intento de login fallido: Usuario o contraseña incorrectos.");
+            ViewData["Error"] = "Usuario o contraseña incorrectos";
+            return View("Index", new LoginViewModel { IsAuthenticated = false });
         }
+
+
 
         public IActionResult Logout()
         {

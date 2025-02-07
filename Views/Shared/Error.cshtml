@@ -3,9 +3,16 @@
 <h1>Error</h1>
 <p>Lo sentimos, ha ocurrido un error.</p>
 
-@if (Model != null && !string.IsNullOrEmpty(Model.RequestId))
+@if (Model.ShowRequestId)
 {
     <p>Id de solicitud: <strong>@Model.RequestId</strong></p>
+}
+
+@if (Model.Exception != null)
+{
+    <p><strong>Detalles del error:</strong></p>
+    <pre>@Model.Exception.Message</pre>
+    <pre>@Model.Exception.StackTrace</pre>
 }
 else
 {

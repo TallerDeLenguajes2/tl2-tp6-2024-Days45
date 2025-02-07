@@ -10,7 +10,7 @@
     <div class="card mx-auto mb-4" style="max-width: 800px;">
         <div class="card-body">
             <h5 class="card-title">Presupuesto ID: @Model.IdPresupuesto</h5>
-            <p><strong>Cliente:</strong> @Model.Cliente.Nombre</p> <!-- Cambiado de Usuario a Cliente -->
+            <p><strong>Cliente:</strong> @(Model.Cliente != null ? Model.Cliente.Nombre : "No disponible")</p> 
             <p><strong>Fecha de Creación:</strong> @Model.FechaCreacion.ToShortDateString()</p>
             <p><strong>Cantidad de Productos:</strong> @Model.CantidadProductos()</p>
             <p><strong>Monto Total (sin IVA):</strong> @(Model.MontoPresupuesto().ToString("N2"))</p>
@@ -20,27 +20,34 @@
 
     @if (Model.Detalle != null && Model.Detalle.Any())
     {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Precio Unitario</th>
-                    <th>Cantidad</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.Detalle)
-                {
-                    <tr>
-                        <td>@item.Producto.Descripcion</td>
-                        <td>@(item.Producto.Precio.ToString("N2"))</td>
-                        <td>@item.Cantidad</td>
-                        <td>@((item.Producto.Precio * item.Cantidad).ToString("N2"))</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Productos Asociados</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Detalle)
+                        {
+                            <tr>
+                                <td>@item.Producto.Descripcion</td>
+                                <td>@(item.Producto.Precio.ToString("N2"))</td>
+                                <td>@item.Cantidad</td>
+                                <td>@((item.Producto.Precio * item.Cantidad).ToString("N2"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     }
     else
     {
@@ -48,7 +55,6 @@
     }
 
     <div class="text-center mt-4">
-        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista de
-            Presupuestos</a>
+        <a asp-action="Index" asp-controller="Presupuestos" class="btn btn-primary">Volver a la Lista de Presupuestos</a>
     </div>
 </section>

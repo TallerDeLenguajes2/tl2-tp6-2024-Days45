@@ -12,21 +12,52 @@ namespace tl2_tp6_2024_Days45.Controllers
         private readonly IPresupuestoRepository _repositorioPresupuestos;
         private readonly IClienteRepository _repositorioClientes;
         private readonly IProductoRepository _repositorioProductos;
+        private readonly IUsuariosRepository _usuariosRepository;
 
-        public PresupuestosController(ILogger<PresupuestosController> logger, IPresupuestoRepository repositorioPresupuestos, IClienteRepository repositorioClientes, IProductoRepository repositorioProductos)
+        public PresupuestosController(ILogger<PresupuestosController> logger, IPresupuestoRepository repositorioPresupuestos, IClienteRepository repositorioClientes, IProductoRepository repositorioProductos, IUsuariosRepository usuariosRepository)
         {
             _logger = logger;
             _repositorioPresupuestos = repositorioPresupuestos;
             _repositorioClientes = repositorioClientes;
             _repositorioProductos = repositorioProductos;
+            _usuariosRepository = usuariosRepository;
         }
-
         [HttpGet]
         public IActionResult Index()
         {
-            var presupuestos = _repositorioPresupuestos.ListarPresupuestos();
-            return View(presupuestos);
+            var rol = HttpContext.Session.GetString("UserRole");
+
+            if (string.IsNullOrEmpty(rol))
+            {
+                HttpContext.Session.Clear();
+                return RedirectToAction("Index", "Login");
+            }
+
+            if (rol == "Administrador")
+            {
+                var presupuestos = _repositorioPresupuestos.ListarPresupuestos();
+                return View(presupuestos);
+            }
+            else if (rol == "Cliente")
+            {
+                var userId = HttpContext.Session.GetInt32("UserId");
+
+                if (userId.HasValue)
+                {
+                    var idCliente = _usuariosRepository.ObtenerIdClientePorUsuario(userId.Value);
+
+                    if (idCliente.HasValue)
+                    {
+                        var presupuestos = _repositorioPresupuestos.ListarPresupuestosPorCliente(idCliente.Value);
+                        return View(presupuestos);
+                    }
+                }
+            }
+
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index", "Login");
         }
+
 
         [HttpGet]
         public IActionResult Crear()
@@ -150,14 +181,44 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpGet]
         public IActionResult VerDetalle(int id)
         {
-            var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
-            if (presupuesto == null) return NotFound();
+            try
+            {
+                var rol = HttpContext.Session.GetString("UserRole");
+                var userId = HttpContext.Session.GetInt32("UserId");
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null)
+                {
+                    return NotFound(); 
+                }
 
-            var rol = HttpContext.Session.GetString("UserRole");
-            var userId = HttpContext.Session.GetInt32("UserId");
+                if (rol == "Administrador")
+                {
+                    return View(presupuesto); 
+                }
+                else if (rol == "Cliente" && userId.HasValue)
+                {
+                    var idCliente = _usuariosRepository.ObtenerIdClientePorUsuario(userId.Value);
+                    if (presupuesto.Cliente != null && presupuesto.Cliente.IdCliente == idCliente)
+                    {
+                        return View(presupuesto); 
+                    }
+                    else
+                    {
 
-            if (rol == "Cliente" && presupuesto.Cliente.IdCliente != userId) return Forbid();
-            return View(presupuesto);
+                        return RedirectToAction("Error", "Home");
+                    }
+                }
+
+                return RedirectToAction("Index", "Login"); 
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error en VerDetalle: {ex.Message}", ex);
+                return RedirectToAction("Error", "Home");
+            }
         }
+
+
+
     }
 }

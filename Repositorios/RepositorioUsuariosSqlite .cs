@@ -16,97 +16,136 @@ namespace rapositoriosTP5
 
         public Usuarios ObtenerUsuario(string usuario, string contraseña)
         {
-            using (var conexion = new SqliteConnection(cadenaConexion))
+            if (string.IsNullOrWhiteSpace(usuario) || string.IsNullOrWhiteSpace(contraseña))
             {
-                conexion.Open();
-                var comando = conexion.CreateCommand();
-                comando.CommandText = @"
-                    SELECT id_usuario, Nombre, Usuario, Contraseña, Rol
-                    FROM Usuarios
-                    WHERE Usuario = @usuario AND Contraseña = @contraseña";
+                throw new ArgumentException("Usuario y contraseña no pueden estar vacíos.");
+            }
 
-                comando.Parameters.AddWithValue("@usuario", usuario);
-                comando.Parameters.AddWithValue("@contraseña", contraseña);
-
-                using (var lector = comando.ExecuteReader())
+            try
+            {
+                using (var conexion = new SqliteConnection(cadenaConexion))
                 {
-                    if (lector.Read())
+                    conexion.Open();
+                    var comando = conexion.CreateCommand();
+                    comando.CommandText = @"
+                SELECT id_usuario, Nombre, Usuario, Contraseña, Rol
+                FROM Usuarios
+                WHERE Usuario = @usuario AND Contraseña = @contraseña";
+
+                    comando.Parameters.AddWithValue("@usuario", usuario);
+                    comando.Parameters.AddWithValue("@contraseña", contraseña);
+
+                    using (var lector = comando.ExecuteReader())
                     {
-                        return new Usuarios(
-                            lector.GetInt32(lector.GetOrdinal("id_usuario")),
-                            lector.GetString(lector.GetOrdinal("Nombre")),
-                            lector.GetString(lector.GetOrdinal("Usuario")),
-                            lector.GetString(lector.GetOrdinal("Contraseña")),
-                            lector.GetString(lector.GetOrdinal("Rol"))
-                        );
+                        if (lector.Read())
+                        {
+                            return new Usuarios(
+                                lector.GetInt32(lector.GetOrdinal("id_usuario")),
+                                lector.GetString(lector.GetOrdinal("Nombre")),
+                                lector.GetString(lector.GetOrdinal("Usuario")),
+                                lector.GetString(lector.GetOrdinal("Contraseña")),
+                                lector.GetString(lector.GetOrdinal("Rol"))
+                            );
+                        }
                     }
                 }
             }
-            // Devuelve null si no se encuentra el usuario
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener el usuario", ex);
+            }
+
             return null;
         }
 
-        // Método para listar todos los usuarios
+
         public List<Usuarios> ListarUsuarios()
         {
             var usuarios = new List<Usuarios>();
 
-            using (var conexion = new SqliteConnection(cadenaConexion))
+            try
             {
-                conexion.Open();
-                var comando = conexion.CreateCommand();
-                comando.CommandText = "SELECT id_usuario, Nombre, Usuario, Contraseña, Rol FROM Usuarios";
-
-                using (var lector = comando.ExecuteReader())
+                using (var conexion = new SqliteConnection(cadenaConexion))
                 {
-                    while (lector.Read())
-                    {
-                        var usuario = new Usuarios(
-                            lector.GetInt32(lector.GetOrdinal("id_usuario")),
-                            lector.GetString(lector.GetOrdinal("Nombre")),
-                            lector.GetString(lector.GetOrdinal("Usuario")),
-                            lector.GetString(lector.GetOrdinal("Contraseña")),
-                            lector.GetString(lector.GetOrdinal("Rol"))
-                        );
+                    conexion.Open();
+                    var comando = conexion.CreateCommand();
+                    comando.CommandText = "SELECT id_usuario, Nombre, Usuario, Contraseña, Rol FROM Usuarios";
 
-                        usuarios.Add(usuario);
+                    using (var lector = comando.ExecuteReader())
+                    {
+                        while (lector.Read())
+                        {
+                            var usuario = new Usuarios(
+                                lector.GetInt32(lector.GetOrdinal("id_usuario")),
+                                lector.GetString(lector.GetOrdinal("Nombre")),
+                                lector.GetString(lector.GetOrdinal("Usuario")),
+                                lector.GetString(lector.GetOrdinal("Contraseña")),
+                                lector.GetString(lector.GetOrdinal("Rol"))
+                            );
+
+                            usuarios.Add(usuario);
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar los usuarios", ex);
             }
 
             return usuarios;
         }
 
-        // Método para obtener un usuario por ID
         public Usuarios ObtenerUsuarioPorId(int id)
         {
-            using (var conexion = new SqliteConnection(cadenaConexion))
+            try
             {
-                conexion.Open();
-                var comando = conexion.CreateCommand();
-                comando.CommandText = @"
-                    SELECT id_usuario, Nombre, Usuario, Contraseña, Rol
-                    FROM Usuarios
-                    WHERE id_usuario = @id";
-
-                comando.Parameters.AddWithValue("@id", id);
-
-                using (var lector = comando.ExecuteReader())
+                using (var conexion = new SqliteConnection(cadenaConexion))
                 {
-                    if (lector.Read())
+                    conexion.Open();
+                    var comando = conexion.CreateCommand();
+                    comando.CommandText = @"
+                        SELECT id_usuario, Nombre, Usuario, Contraseña, Rol
+                        FROM Usuarios
+                        WHERE id_usuario = @id";
+
+                    comando.Parameters.AddWithValue("@id", id);
+
+                    using (var lector = comando.ExecuteReader())
                     {
-                        return new Usuarios(
-                            lector.GetInt32(lector.GetOrdinal("id_usuario")),
-                            lector.GetString(lector.GetOrdinal("Nombre")),
-                            lector.GetString(lector.GetOrdinal("Usuario")),
-                            lector.GetString(lector.GetOrdinal("Contraseña")),
-                            lector.GetString(lector.GetOrdinal("Rol"))
-                        );
+                        if (lector.Read())
+                        {
+                            return new Usuarios(
+                                lector.GetInt32(lector.GetOrdinal("id_usuario")),
+                                lector.GetString(lector.GetOrdinal("Nombre")),
+                                lector.GetString(lector.GetOrdinal("Usuario")),
+                                lector.GetString(lector.GetOrdinal("Contraseña")),
+                                lector.GetString(lector.GetOrdinal("Rol"))
+                            );
+                        }
                     }
                 }
             }
-            // Devuelve null si no se encuentra el usuario
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener el usuario por ID", ex);
+            }
             return null;
+        }
+        public int? ObtenerIdClientePorUsuario(int idUsuario)
+        {
+            using (var connection = new SqliteConnection(cadenaConexion))
+            {
+                connection.Open();
+                string query = "SELECT idCliente FROM Usuarios WHERE id_usuario = @idUsuario";
+
+                using (var command = new SqliteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@idUsuario", idUsuario);
+                    var result = command.ExecuteScalar();
+                    return result != null ? Convert.ToInt32(result) : (int?)null;
+                }
+            }
         }
     }
 }

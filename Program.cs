@@ -18,8 +18,8 @@ builder.Services.AddHttpContextAccessor();
 // Registrar repositorios personalizados
 builder.Services.AddSingleton<IProductoRepository, ProductoRepository>();
 builder.Services.AddSingleton<IPresupuestoRepository, PresupuestoRepository>();
-builder.Services.AddScoped<IUsuariosRepository, RepositorioUsuariosSqlite>();
-builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddSingleton<IUsuariosRepository, RepositorioUsuariosSqlite>();
+builder.Services.AddSingleton<IClienteRepository, ClienteRepository>();
 
 // Agregar servicios de controladores y vistas
 builder.Services.AddControllersWithViews();

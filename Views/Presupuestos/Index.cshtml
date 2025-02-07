@@ -1,51 +1,57 @@
 @model List<EspacioTp5.Presupuestos>
 
 @{
-    ViewData["Title"] = "Lista de Presupuestos";
+    var rol = Context.Session.GetString("UserRole"); // Se obtiene el rol del usuario
 }
 
-<section class="container py-4">
-    <h2 class="text-center my-4">Lista de Presupuestos</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Presupuestos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
 
-    <div class="mb-3">
-        <a asp-controller="Presupuestos" asp-action="Crear" class="btn btn-primary">
-            Crear Presupuesto
-        </a>
-    </div>
+    <h2 class="mb-3">Lista de Presupuestos</h2>
 
-    @if (Model != null && Model.Count > 0)
+    @if (rol == "Administrador")
     {
-        <table class="table table-striped">
-            <thead>
+        <div class="mb-3">
+            <a href="@Url.Action("Crear", "Presupuestos")" class="btn btn-primary">Crear Presupuesto</a>
+        </div>
+    }
+
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Fecha de Creación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var presupuesto in Model)
+            {
                 <tr>
-                    <th>#</th>
-                    <th>Cliente</th>
-                    <th>Fecha de Creación</th>
-                    <th>Acciones</th>
+                    <td>@presupuesto.IdPresupuesto</td>
+                    <td>@presupuesto.Cliente.Nombre</td>
+                    <td>@presupuesto.FechaCreacion.ToShortDateString()</td>
+                    <td>
+                        <a href="@Url.Action("VerDetalle", "Presupuestos", new { id = presupuesto.IdPresupuesto })" class="btn btn-info btn-sm">Ver Detalles</a>
+                        @if (rol == "Administrador")
+                        {
+                            <a href="@Url.Action("Modificar", "Presupuestos", new { id = presupuesto.IdPresupuesto })" class="btn btn-warning btn-sm">Modificar</a>
+                            <a href="@Url.Action("Eliminar", "Presupuestos", new { id = presupuesto.IdPresupuesto })" class="btn btn-danger btn-sm">Eliminar</a>
+                            <a href="@Url.Action("AgregarProducto", "Presupuestos", new { id = presupuesto.IdPresupuesto })" class="btn btn-success btn-sm">Agregar Producto</a>
+                        }
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach (var presupuesto in Model)
-                {
-                    <tr>
-                        <td>@presupuesto.IdPresupuesto</td>
-                        <td>@presupuesto.Cliente.Nombre</td> <!-- Cambiado de Usuario a Cliente -->
-                        <td>@presupuesto.FechaCreacion.ToShortDateString()</td>
-                        <td>
-                            <a asp-controller="Presupuestos" asp-action="VerDetalle" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-info btn-sm">Ver</a>
-                            <a asp-controller="Presupuestos" asp-action="Modificar" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-warning btn-sm">Modificar</a>
-                            <a asp-controller="Presupuestos" asp-action="AgregarProducto" asp-route-id="@presupuesto.IdPresupuesto" class="btn btn-success btn-sm">Agregar Producto</a>
-                            <form asp-controller="Presupuestos" asp-action="Eliminar" asp-route-id="@presupuesto.IdPresupuesto" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que desea eliminar este presupuesto?');">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="alert alert-info text-center">No hay presupuestos registrados.</div>
-    }
-</section>
+            }
+        </tbody>
+    </table>
+
+</body>
+</html>

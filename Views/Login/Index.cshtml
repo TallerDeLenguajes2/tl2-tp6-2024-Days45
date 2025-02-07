@@ -1,36 +1,43 @@
 @model tl2_tp6_2024_Days45.ViewModel.LoginViewModel
 
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Iniciar Sesión";
 }
 
-<h2 class="text-center">@ViewData["Title"]</h2>
+<!-- Incluir el CSS de Bootstrap -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
 
-<!-- Mostrar mensaje de error si existe -->
-@if (!string.IsNullOrEmpty(Model.ErrorMessage))
-{
-    <div class="alert alert-danger" role="alert">
-        @Model.ErrorMessage
-    </div>
-}
+<div class="container mt-5">
+    <h2 class="text-center">@ViewData["Title"]</h2>
 
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-    <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
-        <h4 class="card-title text-center mb-4">Iniciar sesión</h4>
-        <form method="post" asp-action="Login">
-            <div class="mb-3">
-                <label for="username" class="form-label">Usuario:</label>
-                <input type="text" class="form-control" id="username" name="Username" value="@Model.Username" required />
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Login" method="post">
+                        <div class="form-group">
+                            <label asp-for="Username" class="form-label"></label>
+                            <input asp-for="Username" class="form-control" placeholder="Nombre de usuario" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Contraseña" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+                    </form>
+                </div>
             </div>
-
-            <div class="mb-3">
-                <label for="password" class="form-label">Contraseña:</label>
-                <input type="password" class="form-control" id="password" name="Password" required />
-            </div>
-
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary">Iniciar sesión</button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<!-- Agregar los scripts de jQuery y Bootstrap -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

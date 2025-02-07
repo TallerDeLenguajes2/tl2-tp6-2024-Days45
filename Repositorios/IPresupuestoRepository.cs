@@ -11,6 +11,6 @@ namespace rapositoriosTP5
         public void AgregarProductoAPresupuesto(int presupuestoId, Productos producto, int cantidad);
         public void EliminarPresupuesto(int id);
         public void ModificarPresupuesto(Presupuestos presupuesto, List<DetalleModificacionViewModel> detalles);
-        
+        public List<Presupuestos> ListarPresupuestosPorCliente(int idCliente);
     }
 }

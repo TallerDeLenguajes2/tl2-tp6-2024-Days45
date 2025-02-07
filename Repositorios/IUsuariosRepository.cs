@@ -8,5 +8,6 @@ namespace rapositoriosTP5
         public Usuarios ObtenerUsuario(string usuario, string contraseña);
         public Usuarios ObtenerUsuarioPorId(int id);
         public List<Usuarios> ListarUsuarios();
+        public int? ObtenerIdClientePorUsuario(int idUsuario);
     }
 }

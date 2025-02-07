@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using EspacioTp5;
+using Microsoft.AspNetCore.Diagnostics;
+
 
 namespace tl2_tp6_2024_Days45.Controllers;
 
@@ -26,6 +28,14 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var exception = HttpContext.Features.Get<IExceptionHandlerFeature>()?.Error;
+        var errorViewModel = new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+            Exception = exception
+        };
+
+        return View(errorViewModel);
     }
+
 }
