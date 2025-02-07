@@ -8,51 +8,66 @@ namespace rapositoriosTP5
     public class ProductoRepository : IProductoRepository
     {
         private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+
         public void CrearProducto(Productos producto)
         {
-            using (var connection = new SqliteConnection(cadenaConexion))
+            try
             {
-                connection.Open();
-
-                var query =
-                    "INSERT INTO Productos (Descripcion, Precio) VALUES (@Descripcion, @Precio)";
-                using (var command = new SqliteCommand(query, connection))
+                using (var connection = new SqliteConnection(cadenaConexion))
                 {
-                    command.Parameters.AddWithValue(
-                        "@Descripcion",
-                        producto.Descripcion ?? string.Empty
-                    );
-                    command.Parameters.AddWithValue("@Precio", producto.Precio);
-                    command.ExecuteNonQuery();
+                    connection.Open();
+                    var query = "INSERT INTO Productos (Descripcion, Precio) VALUES (@Descripcion, @Precio)";
+                    using (var command = new SqliteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Descripcion", producto.Descripcion ?? string.Empty);
+                        command.Parameters.AddWithValue("@Precio", producto.Precio);
+                        command.ExecuteNonQuery();
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al crear el producto", ex);
+            }
         }
+
         public void ModificarProducto(int id, Productos producto)
         {
-            var query =
-                "UPDATE productos SET descripcion = @descripcion, precio = @precio WHERE idProducto = @idProducto";
-            using (var connection = new SqliteConnection(cadenaConexion))
+            try
             {
-                connection.Open();
-                using (var command = new SqliteCommand(query, connection))
+                using (var connection = new SqliteConnection(cadenaConexion))
                 {
-                    command.Parameters.AddWithValue("@idProducto", id);
-                    command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
-                    command.Parameters.AddWithValue("@precio", producto.Precio);
-                    command.ExecuteNonQuery();
+                    connection.Open();
+                    var query = "UPDATE productos SET descripcion = @descripcion, precio = @precio WHERE idProducto = @idProducto";
+                    using (var command = new SqliteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@idProducto", id);
+                        command.Parameters.AddWithValue("@descripcion", producto.Descripcion);
+                        command.Parameters.AddWithValue("@precio", producto.Precio);
+                        int filasAfectadas = command.ExecuteNonQuery();
+                        if (filasAfectadas == 0)
+                        {
+                            throw new Exception("No se encontró el producto para modificar");
+                        }
+                    }
                 }
-                connection.Close();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al modificar el producto", ex);
             }
         }
+
         public List<Productos> ListarProductos()
         {
             var productos = new List<Productos>();
-            var query = "SELECT * FROM productos";
-            using (var connection = new SqliteConnection(cadenaConexion))
+            try
             {
-                connection.Open();
-                using (var command = new SqliteCommand(query, connection))
+                using (var connection = new SqliteConnection(cadenaConexion))
                 {
+                    connection.Open();
+                    var query = "SELECT * FROM productos";
+                    using (var command = new SqliteCommand(query, connection))
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
@@ -66,37 +81,45 @@ namespace rapositoriosTP5
                         }
                     }
                 }
-                connection.Close();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar los productos", ex);
             }
             return productos;
         }
 
         public Productos ObtenerProducto(int id)
         {
-            Productos producto = null;
-            var query = "SELECT idProducto, Descripcion, Precio FROM Productos WHERE idProducto = @id";
-            using (var connection = new SqliteConnection(cadenaConexion))
+            try
             {
-                connection.Open();
-                using (var command = new SqliteCommand(query, connection))
+                using (var connection = new SqliteConnection(cadenaConexion))
                 {
-                    command.Parameters.AddWithValue("@id", id);
-                    using (var reader = command.ExecuteReader())
+                    connection.Open();
+                    var query = "SELECT idProducto, Descripcion, Precio FROM Productos WHERE idProducto = @id";
+                    using (var command = new SqliteCommand(query, connection))
                     {
-                        if (reader.Read())
+                        command.Parameters.AddWithValue("@id", id);
+                        using (var reader = command.ExecuteReader())
                         {
-                            producto = new Productos(
-                                Convert.ToInt32(reader["idProducto"]),
-                                reader["Descripcion"].ToString(),
-                                Convert.ToInt32(reader["Precio"])
-                            );
+                            if (reader.Read())
+                            {
+                                return new Productos(
+                                    Convert.ToInt32(reader["idProducto"]),
+                                    reader["Descripcion"].ToString(),
+                                    Convert.ToInt32(reader["Precio"])
+                                );
+                            }
                         }
                     }
                 }
+                throw new Exception("Producto inexistente");
             }
-            return producto;
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener el producto", ex);
+            }
         }
-
 
         public void EliminarProducto(int id)
         {
@@ -107,31 +130,32 @@ namespace rapositoriosTP5
                 {
                     try
                     {
-                        var deleteDetalleQuery = @"DELETE FROM PresupuestosDetalle WHERE idProducto=$id";
+                        var deleteDetalleQuery = "DELETE FROM PresupuestosDetalle WHERE idProducto=$id";
                         using (var sqlCmd = new SqliteCommand(deleteDetalleQuery, connection, transaction))
                         {
                             sqlCmd.Parameters.AddWithValue("$id", id);
                             sqlCmd.ExecuteNonQuery();
                         }
 
-                        var sqlQuery = @"DELETE FROM Productos WHERE idProducto=$id";
+                        var sqlQuery = "DELETE FROM Productos WHERE idProducto=$id";
                         using (var sqlCmd = new SqliteCommand(sqlQuery, connection, transaction))
                         {
                             sqlCmd.Parameters.AddWithValue("$id", id);
-                            sqlCmd.ExecuteNonQuery();
+                            int filasAfectadas = sqlCmd.ExecuteNonQuery();
+                            if (filasAfectadas == 0)
+                            {
+                                throw new Exception("No se encontró el producto para eliminar");
+                            }
                         }
-
                         transaction.Commit();
                     }
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        throw new Exception("Error al eliminar producto: " + ex.Message);
+                        throw new Exception("Error al eliminar producto", ex);
                     }
                 }
             }
-
         }
-
     }
 }

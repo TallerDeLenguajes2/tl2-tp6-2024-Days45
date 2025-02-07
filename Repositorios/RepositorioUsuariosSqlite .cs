@@ -1,17 +1,21 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using EspacioTp5;
+using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace rapositoriosTP5
 {
     public class RepositorioUsuariosSqlite : IUsuariosRepository
     {
         private string cadenaConexion;
+        private readonly ILogger<RepositorioUsuariosSqlite> _logger;
 
-        public RepositorioUsuariosSqlite(IConfiguration configuracion)
+        public RepositorioUsuariosSqlite(IConfiguration configuracion, ILogger<RepositorioUsuariosSqlite> logger)
         {
             cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+            _logger = logger;
         }
 
         public Usuarios ObtenerUsuario(string usuario, string contraseña)
@@ -28,9 +32,9 @@ namespace rapositoriosTP5
                     conexion.Open();
                     var comando = conexion.CreateCommand();
                     comando.CommandText = @"
-                SELECT id_usuario, Nombre, Usuario, Contraseña, Rol
-                FROM Usuarios
-                WHERE Usuario = @usuario AND Contraseña = @contraseña";
+                    SELECT id_usuario, Nombre, Usuario, Contraseña, Rol
+                    FROM Usuarios
+                    WHERE Usuario = @usuario AND Contraseña = @contraseña";
 
                     comando.Parameters.AddWithValue("@usuario", usuario);
                     comando.Parameters.AddWithValue("@contraseña", contraseña);
@@ -49,15 +53,14 @@ namespace rapositoriosTP5
                         }
                     }
                 }
+                throw new KeyNotFoundException("Usuario no encontrado.");
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener el usuario", ex);
+                _logger.LogError(ex, "Error al obtener el usuario");
+                throw;
             }
-
-            return null;
         }
-
 
         public List<Usuarios> ListarUsuarios()
         {
@@ -82,18 +85,17 @@ namespace rapositoriosTP5
                                 lector.GetString(lector.GetOrdinal("Contraseña")),
                                 lector.GetString(lector.GetOrdinal("Rol"))
                             );
-
                             usuarios.Add(usuario);
                         }
                     }
                 }
+                return usuarios;
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al listar los usuarios", ex);
+                _logger.LogError(ex, "Error al listar los usuarios");
+                throw;
             }
-
-            return usuarios;
         }
 
         public Usuarios ObtenerUsuarioPorId(int id)
@@ -125,26 +127,36 @@ namespace rapositoriosTP5
                         }
                     }
                 }
+                throw new KeyNotFoundException("Usuario no encontrado con ID " + id);
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener el usuario por ID", ex);
+                _logger.LogError(ex, "Error al obtener el usuario por ID");
+                throw;
             }
-            return null;
         }
+
         public int? ObtenerIdClientePorUsuario(int idUsuario)
         {
-            using (var connection = new SqliteConnection(cadenaConexion))
+            try
             {
-                connection.Open();
-                string query = "SELECT idCliente FROM Usuarios WHERE id_usuario = @idUsuario";
-
-                using (var command = new SqliteCommand(query, connection))
+                using (var connection = new SqliteConnection(cadenaConexion))
                 {
-                    command.Parameters.AddWithValue("@idUsuario", idUsuario);
-                    var result = command.ExecuteScalar();
-                    return result != null ? Convert.ToInt32(result) : (int?)null;
+                    connection.Open();
+                    string query = "SELECT idCliente FROM Usuarios WHERE id_usuario = @idUsuario";
+
+                    using (var command = new SqliteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@idUsuario", idUsuario);
+                        var result = command.ExecuteScalar();
+                        return result != null ? Convert.ToInt32(result) : (int?)null;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener ID de cliente por usuario");
+                throw;
             }
         }
     }

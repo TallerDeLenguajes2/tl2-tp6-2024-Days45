@@ -21,13 +21,17 @@ namespace rapositoriosTP5
                         command.Parameters.AddWithValue("@Nombre", cliente.Nombre);
                         command.Parameters.AddWithValue("@Email", cliente.Email);
                         command.Parameters.AddWithValue("@Telefono", cliente.Telefono);
-                        command.ExecuteNonQuery();
+                        
+                        int filasAfectadas = command.ExecuteNonQuery();
+                        if (filasAfectadas == 0)
+                        {
+                            throw new Exception("No se pudo insertar el cliente en la base de datos.");
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Aquí podrías manejar el error, loguearlo o lanzar una nueva excepción.
                 throw new Exception("Error al crear el cliente", ex);
             }
         }
@@ -46,7 +50,12 @@ namespace rapositoriosTP5
                         command.Parameters.AddWithValue("@Email", cliente.Email);
                         command.Parameters.AddWithValue("@Telefono", cliente.Telefono);
                         command.Parameters.AddWithValue("@id", id);
-                        command.ExecuteNonQuery();
+                        
+                        int filasAfectadas = command.ExecuteNonQuery();
+                        if (filasAfectadas == 0)
+                        {
+                            throw new Exception($"No se encontró un cliente con Id {id} para modificar.");
+                        }
                     }
                 }
             }
@@ -73,6 +82,11 @@ namespace rapositoriosTP5
                             lista.Add(new Clientes(reader.GetInt32(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)));
                         }
                     }
+                }
+
+                if (lista.Count == 0)
+                {
+                    throw new Exception("No se encontraron clientes en la base de datos.");
                 }
             }
             catch (Exception ex)
@@ -103,12 +117,13 @@ namespace rapositoriosTP5
                         }
                     }
                 }
+                
+                throw new Exception($"No se encontró un cliente con Id {id}.");
             }
             catch (Exception ex)
             {
                 throw new Exception("Error al obtener el cliente", ex);
             }
-            return null;
         }
 
         public void EliminarCliente(int id)
@@ -122,7 +137,11 @@ namespace rapositoriosTP5
                     using (var command = new SqliteCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@id", id);
-                        command.ExecuteNonQuery();
+                        int filasAfectadas = command.ExecuteNonQuery();
+                        if (filasAfectadas == 0)
+                        {
+                            throw new Exception($"No se encontró un cliente con Id {id} para eliminar.");
+                        }
                     }
                 }
             }

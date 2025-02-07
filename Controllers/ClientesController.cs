@@ -40,9 +40,18 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpPost]
         public IActionResult Crear(string nombre, string email, string telefono)
         {
-            var cliente = new Clientes(nombre, email, telefono);
-            _repositorioClientes.CrearCliente(cliente);
-            return RedirectToAction("Index");
+            try
+            {
+                var cliente = new Clientes(nombre, email, telefono);
+                _repositorioClientes.CrearCliente(cliente);
+                _logger.LogInformation("Cliente creado correctamente: {Nombre}", nombre);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear un nuevo cliente");
+                return View("Error");
+            }
         }
 
         [HttpGet]
@@ -90,14 +99,37 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpGet]
         public IActionResult Eliminar(int id)
         {
-            return View(_repositorioClientes.ObtenerCliente(id));
+            try
+            {
+                var cliente = _repositorioClientes.ObtenerCliente(id);
+                if (cliente == null)
+                {
+                    _logger.LogWarning("Cliente con ID {ClienteId} no encontrado para eliminación", id);
+                    return RedirectToAction("Index");
+                }
+                return View(cliente);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el cliente con ID {ClienteId} para eliminar", id);
+                return View("Error");
+            }
         }
 
         [HttpPost]
         public IActionResult EliminarCliente(int id)
         {
-            _repositorioClientes.EliminarCliente(id);
-            return RedirectToAction("Index");
+            try
+            {
+                _repositorioClientes.EliminarCliente(id);
+                _logger.LogInformation("Cliente con ID {ClienteId} eliminado", id);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al eliminar el cliente con ID {ClienteId}", id);
+                return View("Error");
+            }
         }
     }
 }

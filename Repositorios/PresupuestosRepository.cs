@@ -1,14 +1,20 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using EspacioTp5;
 using tl2_tp6_2024_Days45.ViewModel;
+
 namespace rapositoriosTP5
 {
     public class PresupuestoRepository : IPresupuestoRepository
     {
-        private string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
-
+        private readonly string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+        private readonly ILogger<PresupuestoRepository> logger;
+        public PresupuestoRepository(ILogger<PresupuestoRepository> logger)
+        {
+            this.logger = logger;
+        }
         public void CrearPresupuesto(Presupuestos presupuesto)
         {
             using (SqliteConnection connection = new SqliteConnection(cadenaConexion))
@@ -43,13 +49,12 @@ namespace rapositoriosTP5
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        // Log or handle the exception as needed
-                        throw new Exception("Error al crear el presupuesto: " + ex.Message, ex);
+                        logger.LogError(ex, "Error al crear el presupuesto");
+                        throw;
                     }
                 }
             }
         }
-
         public void AgregarProductoAPresupuesto(int presupuestoId, Productos producto, int cantidad)
         {
             try
@@ -68,11 +73,10 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
-                // Log or handle the exception as needed
-                throw new Exception("Error al agregar el producto al presupuesto: " + ex.Message, ex);
+                logger.LogError(ex, "Error al agregar el producto al presupuesto");
+                throw;
             }
         }
-
         public void EliminarPresupuesto(int id)
         {
             try
@@ -100,11 +104,10 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
-                // Log or handle the exception as needed
-                throw new Exception("Error al eliminar el presupuesto: " + ex.Message, ex);
+                logger.LogError(ex, "Error al eliminar el presupuesto con ID {Id}", id);
+                throw new Exception("Error al eliminar el presupuesto. Consulte con el administrador.", ex);
             }
         }
-
         public Presupuestos ObtenerPresupuesto(int id)
         {
             ProductoRepository productoRepository = new ProductoRepository();
@@ -118,11 +121,11 @@ namespace rapositoriosTP5
                 {
                     connection.Open();
                     string query = @"SELECT p.idPresupuesto, p.FechaCreacion, p.IdCliente, c.Nombre, c.Email, c.Telefono, 
-                                     pd.idProducto, pd.Cantidad 
-                                     FROM Presupuestos p
-                                     INNER JOIN Clientes c ON p.IdCliente = c.IdCliente
-                                     LEFT JOIN PresupuestosDetalle pd ON p.idPresupuesto = pd.idPresupuesto
-                                     WHERE p.idPresupuesto = @id";
+                             pd.idProducto, pd.Cantidad 
+                             FROM Presupuestos p
+                             INNER JOIN Clientes c ON p.IdCliente = c.IdCliente
+                             LEFT JOIN PresupuestosDetalle pd ON p.idPresupuesto = pd.idPresupuesto
+                             WHERE p.idPresupuesto = @id";
 
                     using (var command = new SqliteCommand(query, connection))
                     {
@@ -156,16 +159,14 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
-                // Log or handle the exception as needed
-                throw new Exception("Error al obtener el presupuesto: " + ex.Message, ex);
+                logger.LogError(ex, "Error al obtener el presupuesto con ID {Id}", id);
+                throw new Exception("Error al obtener el presupuesto. Consulte con el administrador.", ex);
             }
         }
-
         public List<Presupuestos> ListarPresupuestos()
         {
             List<Presupuestos> listaPresupuestos = new List<Presupuestos>();
             ClienteRepository clienteRepo = new ClienteRepository();
-
             try
             {
                 using (var connection = new SqliteConnection(cadenaConexion))
@@ -182,47 +183,49 @@ namespace rapositoriosTP5
                                 DateTime fechaCreacion = reader.GetDateTime(1);
                                 int idCliente = reader.GetInt32(2);
 
-                                // Usar clienteRepo para obtener el cliente
                                 Clientes cliente = clienteRepo.ObtenerCliente(idCliente);
-
                                 listaPresupuestos.Add(new Presupuestos(idPresupuesto, fechaCreacion, cliente));
                             }
                         }
                     }
                 }
-
                 return listaPresupuestos;
             }
             catch (Exception ex)
             {
-                // Log or handle the exception as needed
-                throw new Exception("Error al listar los presupuestos: " + ex.Message, ex);
+                logger.LogError(ex, "Error al listar los presupuestos");
+                throw new Exception("Error al listar los presupuestos. Consulte con el administrador.", ex);
             }
         }
         public List<Presupuestos> ListarPresupuestosPorCliente(int idCliente)
         {
-            List<Presupuestos> listaPresupuestos = new List<Presupuestos>();
-
-            using (var connection = new SqliteConnection(cadenaConexion))
+            try
             {
-                connection.Open();
-                string query = "SELECT idPresupuesto FROM Presupuestos WHERE idCliente = @idCliente";
-
-                using (var command = new SqliteCommand(query, connection))
+                List<Presupuestos> listaPresupuestos = new List<Presupuestos>();
+                using (var connection = new SqliteConnection(cadenaConexion))
                 {
-                    command.Parameters.AddWithValue("@idCliente", idCliente);  // Verifica que el idCliente sea correcto
-                    using (var reader = command.ExecuteReader())
+                    connection.Open();
+                    string query = "SELECT idPresupuesto FROM Presupuestos WHERE idCliente = @idCliente";
+                    using (var command = new SqliteCommand(query, connection))
                     {
-                        while (reader.Read())
+                        command.Parameters.AddWithValue("@idCliente", idCliente);
+                        using (var reader = command.ExecuteReader())
                         {
-                            listaPresupuestos.Add(ObtenerPresupuesto(reader.GetInt32(0)));  // Asegúrate de que la función ObtenerPresupuesto esté funcionando correctamente
+                            while (reader.Read())
+                            {
+                                listaPresupuestos.Add(ObtenerPresupuesto(reader.GetInt32(0)));
+                            }
                         }
                     }
                 }
+                return listaPresupuestos;
             }
-            return listaPresupuestos;
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al listar presupuestos del cliente {IdCliente}", idCliente);
+                throw new Exception("Error al obtener los presupuestos del cliente. Consulte con el administrador.", ex);
+            }
         }
-
         public void ModificarPresupuesto(Presupuestos presupuesto, List<DetalleModificacionViewModel> detalles)
         {
             try
@@ -230,7 +233,6 @@ namespace rapositoriosTP5
                 using (var connection = new SqliteConnection(cadenaConexion))
                 {
                     connection.Open();
-
                     string queryPresupuesto = "UPDATE Presupuestos SET FechaCreacion = @FechaCreacion, IdCliente = @IdCliente WHERE idPresupuesto = @idPresupuesto";
                     using (var command = new SqliteCommand(queryPresupuesto, connection))
                     {
@@ -242,11 +244,10 @@ namespace rapositoriosTP5
 
                     foreach (var detalleVM in detalles)
                     {
-                        string queryDetalle = @"
-            INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad)
-            VALUES (@idPresupuesto, @idProducto, @Cantidad)
-            ON CONFLICT (idPresupuesto, idProducto) DO UPDATE
-            SET Cantidad = @Cantidad";
+                        string queryDetalle = @"INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad)
+                VALUES (@idPresupuesto, @idProducto, @Cantidad)
+                ON CONFLICT (idPresupuesto, idProducto) DO UPDATE
+                SET Cantidad = @Cantidad";
 
                         using (var command = new SqliteCommand(queryDetalle, connection))
                         {
@@ -271,9 +272,10 @@ namespace rapositoriosTP5
             }
             catch (Exception ex)
             {
-                // Log or handle the exception as needed
-                throw new Exception("Error al modificar el presupuesto: " + ex.Message, ex);
+                logger.LogError(ex, "Error al modificar el presupuesto con ID {IdPresupuesto}", presupuesto.IdPresupuesto);
+                throw new Exception("Error al modificar el presupuesto. Consulte con el administrador.", ex);
             }
         }
+
     }
 }

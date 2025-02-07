@@ -25,157 +25,229 @@ namespace tl2_tp6_2024_Days45.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            var rol = HttpContext.Session.GetString("UserRole");
-
-            if (string.IsNullOrEmpty(rol))
+            try
             {
+                var rol = HttpContext.Session.GetString("UserRole");
+
+                if (string.IsNullOrEmpty(rol))
+                {
+                    HttpContext.Session.Clear();
+                    return RedirectToAction("Index", "Login");
+                }
+
+                if (rol == "Administrador")
+                {
+                    var presupuestos = _repositorioPresupuestos.ListarPresupuestos();
+                    return View(presupuestos);
+                }
+                else if (rol == "Cliente")
+                {
+                    var userId = HttpContext.Session.GetInt32("UserId");
+
+                    if (userId.HasValue)
+                    {
+                        var idCliente = _usuariosRepository.ObtenerIdClientePorUsuario(userId.Value);
+
+                        if (idCliente.HasValue)
+                        {
+                            var presupuestos = _repositorioPresupuestos.ListarPresupuestosPorCliente(idCliente.Value);
+                            return View(presupuestos);
+                        }
+                    }
+                }
+
                 HttpContext.Session.Clear();
                 return RedirectToAction("Index", "Login");
             }
-
-            if (rol == "Administrador")
+            catch (Exception ex)
             {
-                var presupuestos = _repositorioPresupuestos.ListarPresupuestos();
-                return View(presupuestos);
+                _logger.LogError(ex, "Error en Index de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
             }
-            else if (rol == "Cliente")
-            {
-                var userId = HttpContext.Session.GetInt32("UserId");
-
-                if (userId.HasValue)
-                {
-                    var idCliente = _usuariosRepository.ObtenerIdClientePorUsuario(userId.Value);
-
-                    if (idCliente.HasValue)
-                    {
-                        var presupuestos = _repositorioPresupuestos.ListarPresupuestosPorCliente(idCliente.Value);
-                        return View(presupuestos);
-                    }
-                }
-            }
-
-            HttpContext.Session.Clear();
-            return RedirectToAction("Index", "Login");
         }
-
 
         [HttpGet]
         public IActionResult Crear()
         {
-            var viewModel = new CrearPresupuestoViewModel
+            try
             {
-                Clientes = _repositorioClientes.ListarClientes(),
-                Productos = _repositorioProductos.ListarProductos(),
-                FechaCreacion = DateTime.Now
-            };
-            return View(viewModel);
+                var viewModel = new CrearPresupuestoViewModel
+                {
+                    Clientes = _repositorioClientes.ListarClientes(),
+                    Productos = _repositorioProductos.ListarProductos(),
+                    FechaCreacion = DateTime.Now
+                };
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en Crear (GET) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         [HttpPost]
         public IActionResult Crear(CrearPresupuestoViewModel viewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                viewModel.Clientes = _repositorioClientes.ListarClientes();
-                viewModel.Productos = _repositorioProductos.ListarProductos();
-                return View(viewModel);
-            }
+                if (!ModelState.IsValid)
+                {
+                    viewModel.Clientes = _repositorioClientes.ListarClientes();
+                    viewModel.Productos = _repositorioProductos.ListarProductos();
+                    return View(viewModel);
+                }
 
-            var cliente = _repositorioClientes.ObtenerCliente(viewModel.IdCliente);
-            if (cliente == null)
+                var cliente = _repositorioClientes.ObtenerCliente(viewModel.IdCliente);
+                if (cliente == null)
+                {
+                    ModelState.AddModelError("Cliente", "El cliente seleccionado no es válido.");
+                    viewModel.Clientes = _repositorioClientes.ListarClientes();
+                    viewModel.Productos = _repositorioProductos.ListarProductos();
+                    return View(viewModel);
+                }
+
+                var detalles = viewModel.ProductosSeleccionados
+                    .Where(p => p.Cantidad > 0)
+                    .Select(p => new PresupuestosDetalle(
+                        _repositorioProductos.ObtenerProducto(p.IdProducto),
+                        p.Cantidad
+                    )).ToList();
+
+                if (!detalles.Any())
+                {
+                    ModelState.AddModelError("Productos", "Debe seleccionar al menos un producto con cantidad válida.");
+                    viewModel.Clientes = _repositorioClientes.ListarClientes();
+                    viewModel.Productos = _repositorioProductos.ListarProductos();
+                    return View(viewModel);
+                }
+
+                var presupuesto = new Presupuestos(viewModel.FechaCreacion, cliente, detalles);
+                _repositorioPresupuestos.CrearPresupuesto(presupuesto);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
             {
-                ModelState.AddModelError("Cliente", "El cliente seleccionado no es válido.");
-                viewModel.Clientes = _repositorioClientes.ListarClientes();
-                viewModel.Productos = _repositorioProductos.ListarProductos();
-                return View(viewModel);
+                _logger.LogError(ex, "Error en Crear (POST) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
             }
-
-            var detalles = viewModel.ProductosSeleccionados
-                .Where(p => p.Cantidad > 0)
-                .Select(p => new PresupuestosDetalle(
-                    _repositorioProductos.ObtenerProducto(p.IdProducto),
-                    p.Cantidad
-                )).ToList();
-
-            if (!detalles.Any())
-            {
-                ModelState.AddModelError("Productos", "Debe seleccionar al menos un producto con cantidad válida.");
-                viewModel.Clientes = _repositorioClientes.ListarClientes();
-                viewModel.Productos = _repositorioProductos.ListarProductos();
-                return View(viewModel);
-            }
-
-            var presupuesto = new Presupuestos(viewModel.FechaCreacion, cliente, detalles);
-            _repositorioPresupuestos.CrearPresupuesto(presupuesto);
-            return RedirectToAction("Index");
         }
 
         [HttpGet]
         public IActionResult Modificar(int id)
         {
-            var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
-            if (presupuesto == null) return NotFound();
-
-            var viewModel = new ModificarPresupuestoViewModel
+            try
             {
-                IdPresupuesto = presupuesto.IdPresupuesto,
-                FechaCreacion = presupuesto.FechaCreacion,
-                Detalles = presupuesto.Detalle.Select(d => new DetalleModificacionViewModel
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null) return NotFound();
+
+                var viewModel = new ModificarPresupuestoViewModel
                 {
-                    IdProducto = d.Producto.IdProducto,
-                    NombreProducto = d.Producto.Descripcion,
-                    Cantidad = d.Cantidad,
-                    Precio = d.Producto.Precio
-                }).ToList()
-            };
-            return View(viewModel);
+                    IdPresupuesto = presupuesto.IdPresupuesto,
+                    FechaCreacion = presupuesto.FechaCreacion,
+                    Detalles = presupuesto.Detalle.Select(d => new DetalleModificacionViewModel
+                    {
+                        IdProducto = d.Producto.IdProducto,
+                        NombreProducto = d.Producto.Descripcion,
+                        Cantidad = d.Cantidad,
+                        Precio = d.Producto.Precio
+                    }).ToList()
+                };
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en Modificar (GET) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         [HttpPost]
         public IActionResult Modificar(ModificarPresupuestoViewModel viewModel)
         {
-            if (!ModelState.IsValid) return View(viewModel);
+            try
+            {
+                if (!ModelState.IsValid) return View(viewModel);
 
-            var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(viewModel.IdPresupuesto);
-            if (presupuesto == null) return NotFound();
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(viewModel.IdPresupuesto);
+                if (presupuesto == null) return NotFound();
 
-            presupuesto.ModificarFecha(viewModel.FechaCreacion);
-            _repositorioPresupuestos.ModificarPresupuesto(presupuesto, viewModel.Detalles);
-            return RedirectToAction("Index");
+                presupuesto.ModificarFecha(viewModel.FechaCreacion);
+                _repositorioPresupuestos.ModificarPresupuesto(presupuesto, viewModel.Detalles);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en Modificar (POST) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         [HttpGet]
         public IActionResult Eliminar(int id)
         {
-            var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
-            if (presupuesto == null) return RedirectToAction("Index");
-            return View(presupuesto);
+            try
+            {
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null) return RedirectToAction("Index");
+                return View(presupuesto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en Eliminar (GET) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         [HttpPost]
         public IActionResult Eliminar(int id, string confirmacion)
         {
-            _repositorioPresupuestos.EliminarPresupuesto(id);
-            return RedirectToAction("Index");
+            try
+            {
+                _repositorioPresupuestos.EliminarPresupuesto(id);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en Eliminar (POST) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         [HttpGet]
         public IActionResult AgregarProducto(int id)
         {
-            var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
-            if (presupuesto == null) return NotFound();
-            ViewBag.Productos = _repositorioProductos.ListarProductos();
-            return View(presupuesto);
+            try
+            {
+                var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
+                if (presupuesto == null) return NotFound();
+
+                ViewBag.Productos = _repositorioProductos.ListarProductos();
+                return View(presupuesto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en AgregarProducto (GET) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         [HttpPost]
         public IActionResult AgregarProducto(int idPresupuesto, int idProducto, int cantidad)
         {
-            var producto = _repositorioProductos.ObtenerProducto(idProducto);
-            if (producto == null) return NotFound();
+            try
+            {
+                var producto = _repositorioProductos.ObtenerProducto(idProducto);
+                if (producto == null) return NotFound();
 
-            _repositorioPresupuestos.AgregarProductoAPresupuesto(idPresupuesto, producto, cantidad);
-            return RedirectToAction("VerDetalle", new { id = idPresupuesto });
+                _repositorioPresupuestos.AgregarProductoAPresupuesto(idPresupuesto, producto, cantidad);
+                return RedirectToAction("VerDetalle", new { id = idPresupuesto });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en AgregarProducto (POST) de PresupuestosController.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
         [HttpGet]
@@ -186,39 +258,32 @@ namespace tl2_tp6_2024_Days45.Controllers
                 var rol = HttpContext.Session.GetString("UserRole");
                 var userId = HttpContext.Session.GetInt32("UserId");
                 var presupuesto = _repositorioPresupuestos.ObtenerPresupuesto(id);
-                if (presupuesto == null)
-                {
-                    return NotFound(); 
-                }
+                if (presupuesto == null) return NotFound();
 
                 if (rol == "Administrador")
                 {
-                    return View(presupuesto); 
+                    return View(presupuesto);
                 }
                 else if (rol == "Cliente" && userId.HasValue)
                 {
                     var idCliente = _usuariosRepository.ObtenerIdClientePorUsuario(userId.Value);
                     if (presupuesto.Cliente != null && presupuesto.Cliente.IdCliente == idCliente)
                     {
-                        return View(presupuesto); 
+                        return View(presupuesto);
                     }
                     else
                     {
-
                         return RedirectToAction("Error", "Home");
                     }
                 }
 
-                return RedirectToAction("Index", "Login"); 
+                return RedirectToAction("Index", "Login");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error en VerDetalle: {ex.Message}", ex);
+                _logger.LogError(ex, "Error en VerDetalle de PresupuestosController.");
                 return RedirectToAction("Error", "Home");
             }
         }
-
-
-
     }
 }
